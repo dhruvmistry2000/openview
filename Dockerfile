@@ -4,6 +4,9 @@ FROM node:22-bookworm-slim
 WORKDIR /app
 
 COPY server.mjs index.html ./
+COPY css ./css
+COPY js ./js
+COPY lib ./lib
 
 # 0.0.0.0 is required when Docker publishes a port into this container.
 # Compose uses host networking and overrides HOST (see docker-compose.yml).

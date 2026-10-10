@@ -2,7 +2,18 @@
 
 Openview is a browser client for [OpenCode](https://opencode.ai). It lists sessions from every project and lets you read them, send messages, rename them, stop a running turn, undo a turn, and delete them. The same page works on a phone over your LAN or Tailscale.
 
-The page is one HTML file. `server.mjs` is a small Node proxy: it serves that page and forwards everything else to `opencode serve`.
+The browser page is `index.html`. Styles live in `css/app.css`, and the client is split across `js/` so each area is its own file. `server.mjs` is a small Node proxy: it serves those files and forwards everything else to `opencode serve`. The database reader is `lib/db.mjs`. The agent and skill writer is `lib/library.mjs`.
+
+## Layout
+
+| Path | Contents |
+| --- | --- |
+| `index.html` | Page shell |
+| `css/app.css` | Layout and theme |
+| `js/` | Browser client, one file per area |
+| `server.mjs` | Proxy, static files, and the Home route |
+| `lib/db.mjs` | Read-only session database |
+| `lib/library.mjs` | Writes an agent or skill file |
 
 ![Home page, with the session list and changes panel closed](docs/home.png)
 
