@@ -104,7 +104,11 @@ The client prefers `GET /global/event`, one server-sent stream for every project
 
 ## Changes
 
-With a session open, the line under the path is the git branch and how many files differ from HEAD, plus how many files this session itself changed. Open it to see each file’s status and the added and removed line counts. **Diff** on a row loads that file’s patch. A project that is not a git checkout only shows session files, and the line stays hidden when there is nothing to report. The list refreshes when the session goes idle.
+With a session open, changed files sit in a panel on the right, in the same place the terminal UI keeps them. The header shows the branch and how many files differ. Each row is a status letter, the file name, and the added and removed counts. Select a row to read that file’s diff. The panel slides over the page with the same control as the session list, and that choice is remembered. Closing either panel leaves the conversation where it is. A project that is not a git checkout only shows session files, and the panel stays hidden when there is nothing to report. The list refreshes when the session goes idle.
+
+## Undo
+
+Each of your messages has **Undo**. That reverts the session to just before that message: later messages are set aside, and files the session wrote after that point go back to how they were. **Restore** puts the messages and the files back. Undo waits until the session is idle.
 
 ## Agents and skills
 
@@ -126,7 +130,7 @@ When the proxy runs in Docker it cannot see your config directory, so a global s
 - Child sessions and archived sessions are hidden.
 - The markdown renderer covers headings, lists, blockquotes, tables, links, emphasis, inline code, and fenced code. It does not render raw HTML, images, or nested lists.
 - Tool output is truncated in the page. Open the tool row to read the stored text.
-- Questions from the model can be answered or dismissed; there is no file upload, diff view, or fork/revert UI.
+- Questions from the model can be answered or dismissed. There is no file upload or fork. Diff and undo are in the session view.
 - A direct server URL (settings dialog) needs OpenCode’s `--cors` flag. The proxy path does not.
 - The database reader can miss a session that has not been committed yet, and it cannot revive a project the running server has never opened. Those rows still appear, and opening them explains that the project is unavailable.
 - Model and agent menus come from `GET /config/providers` and `GET /agent`. A project with neither configured still lets you send with the server’s defaults. New agents and skills are files written by Library; the menu refreshes after a primary agent is saved.

@@ -61,7 +61,8 @@
   ::selection { background: color-mix(in srgb, var(--cobalt) 24%, transparent); }
   * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent; }
   .mono, code, pre, kbd { font-family: "JetBrains Mono", ui-monospace, monospace; }
-  #app { display: flex; height: 100dvh; min-height: 0; overflow: hidden; }
+  #app { display: flex; flex-direction: column; height: 100dvh; min-height: 0; overflow: hidden; }
+  #stage { position: relative; flex: 1; min-height: 0; display: flex; overflow: hidden; }
   #scrim { display: none; }
   #sidebar {
     width: 312px;
@@ -160,9 +161,9 @@
     border-radius: 8px;
     padding: 6px 8px;
   }
-  .text-btn, #settings-btn, #library-btn, #menu, #hide-sessions { color: var(--ink-soft); }
+  .text-btn, #settings-btn, #library-btn, #menu { color: var(--ink-soft); }
   .text-btn { padding-left: 2px; }
-  .text-btn:hover, #settings-btn:hover, #library-btn:hover, #menu:hover, #hide-sessions:hover {
+  .text-btn:hover, #settings-btn:hover, #library-btn:hover, #menu:hover {
     color: var(--ink);
     background: var(--fill);
   }
@@ -181,12 +182,16 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    flex: none;
+    z-index: 5;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
     padding-top: calc(12px + env(safe-area-inset-top));
-    padding-bottom: 4px;
+    padding-bottom: 8px;
   }
   #top label { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; color: var(--ink-soft); font-size: 12px; }
   #project { max-width: 260px; }
-  #menu { display: none; }
+  #menu { display: inline-flex; }
   button.icon-btn {
     display: inline-flex;
     align-items: center;
@@ -215,35 +220,63 @@
   #session-bar h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
   .path { margin: 2px 0 0; color: var(--ink-soft); font-size: 12px; }
   #changes {
-    width: min(760px, calc(100% - 40px));
-    margin: 6px auto 0;
+    width: 340px;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--fog);
+    border-left: 1px solid var(--line);
+    padding-top: env(safe-area-inset-top);
   }
-  #changes-toggle { color: var(--ink-soft); font-size: 12.5px; }
-  #changes-panel {
-    margin-top: 8px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    max-height: 320px;
+  #changes .side-head { padding-bottom: 4px; }
+  #changes-meta { margin: 0; }
+  #changes-list { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 4px 0 8px; min-height: 0; }
+  #changes-diff {
+    flex: none;
+    max-height: 46%;
     overflow: auto;
+    border-top: 1px solid var(--line);
+    background: var(--paper);
+  }
+  #changes-diff .codeblock { margin: 0; border: 0; border-radius: 0; }
+  #changes-diff .codehead span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
   }
   .change-label {
-    padding: 8px 10px 2px;
+    margin: 0;
+    padding: 12px 18px 4px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     color: var(--ink-soft);
-    font-size: 11px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
   }
   .change-row {
+    appearance: none;
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 10px;
+    width: calc(100% - 16px);
+    margin: 1px 8px;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    padding: 7px 10px;
+    color: inherit;
   }
-  .change-row + .change-row { border-top: 1px solid var(--line); }
-  .change-status { width: 5.4em; flex: none; font-size: 12px; }
-  .change-status.added { color: var(--ok); }
-  .change-status.deleted { color: var(--danger); }
-  .change-status.modified { color: var(--warn); }
+  .change-row:hover { background: var(--fill); }
+  .change-row.active {
+    background: color-mix(in srgb, var(--cobalt) 14%, transparent);
+    box-shadow: inset 2px 0 0 var(--cobalt);
+  }
+  .change-mark { width: 1.1em; flex: none; font-size: 12px; font-weight: 500; }
+  .change-mark.added { color: var(--ok); }
+  .change-mark.deleted { color: var(--danger); }
+  .change-mark.modified { color: var(--warn); }
   .change-file {
     flex: 1;
     min-width: 0;
@@ -255,14 +288,11 @@
   .change-count { flex: none; font-size: 12px; color: var(--ink-soft); }
   .change-count .add { color: var(--ok); }
   .change-count .del { color: var(--danger); }
-  .change-diff { flex: none; font-size: 12px; padding: 4px 8px; }
-  .change-patch { padding: 0 10px 8px; }
-  .change-patch .codeblock { margin: 0; }
-  .patch { max-height: 280px; margin: 0; overflow: auto; }
+  .patch { max-height: none; margin: 0; overflow: auto; }
   .patch .add { color: var(--ok); }
   .patch .del { color: var(--danger); }
   .patch .hunk { color: var(--cobalt); }
-  .change-empty { padding: 10px; color: var(--ink-soft); font-size: 13px; }
+  .change-empty { padding: 8px 18px; color: var(--ink-soft); font-size: 13px; }
   .bar-actions { display: flex; gap: 6px; flex: none; }
   #banner {
     width: min(760px, calc(100% - 40px));
@@ -349,6 +379,22 @@
   .reason .md { color: var(--ink-soft); font-size: 13.5px; padding-top: 4px; }
   .note { color: var(--ink-soft); font-size: 13px; }
   .msg-foot { margin-top: 6px; color: var(--ink-soft); font-size: 12px; }
+  .msg-actions { display: flex; justify-content: flex-end; margin-top: 6px; }
+  .msg-actions button { font-size: 12px; padding: 4px 8px; }
+  .msg.reverted { opacity: 0.48; }
+  #revert-bar {
+    width: min(760px, calc(100% - 40px));
+    margin: 8px auto 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--warn) 12%, var(--paper));
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+  }
+  #revert-bar p { margin: 0; }
   .msg-error { margin-top: 8px; border-left: 3px solid var(--danger); padding: 4px 10px; color: var(--danger); }
   #jump { align-self: center; margin: 0 0 6px; }
   #jump[hidden] { display: none; }
@@ -504,16 +550,19 @@
   .q-block { margin-bottom: 8px; }
   .q-block strong { display: block; font-size: 14px; }
   @media (min-width: 761px) {
-    #sidebar {
-      width: 312px;
-      min-width: 312px;
-      transition: margin-left 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+    #sidebar, #changes {
+      position: absolute;
+      z-index: 20;
+      top: 0;
+      bottom: 0;
+      transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
     }
-    #app.sidebar-collapsed #sidebar { margin-left: -312px; }
-    #app.sidebar-collapsed #menu { display: inline-flex; }
+    #sidebar { left: 0; width: 312px; box-shadow: 12px 0 40px var(--shadow); }
+    #changes { right: 0; width: 340px; box-shadow: -12px 0 40px var(--shadow); }
+    #app.sidebar-collapsed #sidebar { transform: translateX(-100%); box-shadow: none; }
+    #app.changes-collapsed #changes { transform: translateX(100%); box-shadow: none; }
   }
   @media (max-width: 760px) {
-    #menu { display: inline-flex; }
     #app.sidebar-collapsed #sidebar,
     #sidebar {
       position: fixed;
@@ -528,11 +577,23 @@
     }
     #sidebar.open,
     #app.sidebar-collapsed #sidebar.open { transform: none; box-shadow: 12px 0 40px var(--shadow); }
+    #changes {
+      position: fixed;
+      z-index: 20;
+      inset: 0 0 0 auto;
+      width: min(88vw, 380px);
+      min-width: 0;
+      margin-right: 0;
+      transform: translateX(105%);
+      transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+      box-shadow: none;
+    }
+    #changes.open { transform: none; box-shadow: -12px 0 40px var(--shadow); }
     #scrim.show { display: block; position: fixed; inset: 0; background: rgba(16, 20, 24, 0.42); z-index: 15; }
     #project { max-width: none; }
     input, select, textarea { font-size: 16px; }
     #stream { padding-left: 14px; padding-right: 14px; }
-    #session-bar, #changes, #prompts, #banner { width: min(760px, calc(100% - 28px)); }
+    #session-bar, #revert-bar, #prompts, #banner { width: min(760px, calc(100% - 28px)); }
     #composer { width: min(792px, calc(100% - 20px)); border-radius: 14px; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -545,17 +606,31 @@
 </head>
 <body>
 <div id="app">
+  <header id="top">
+    <button id="menu" class="icon-btn" type="button" aria-expanded="true" aria-controls="sidebar" aria-label="Hide sessions">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <rect x="3.5" y="4.5" width="17" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.75"/>
+        <path d="M9 4.5v15" fill="none" stroke="currentColor" stroke-width="1.75"/>
+      </svg>
+    </button>
+    <label>Project
+      <select id="project" aria-label="Project"></select>
+    </label>
+    <button id="library-btn" type="button">Library</button>
+    <button id="settings-btn" type="button">Settings</button>
+    <button id="show-changes" class="icon-btn" type="button" hidden aria-expanded="true" aria-controls="changes" aria-label="Hide changes">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <rect x="3.5" y="4.5" width="17" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.75"/>
+        <path d="M15 4.5v15" fill="none" stroke="currentColor" stroke-width="1.75"/>
+      </svg>
+    </button>
+  </header>
+  <div id="stage">
   <div id="scrim"></div>
   <aside id="sidebar">
     <div class="side-head">
       <div class="brand">
         <strong>Openview</strong>
-        <button id="hide-sessions" class="icon-btn" type="button" aria-label="Hide sessions" aria-controls="sidebar" aria-expanded="true">
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <rect x="3.5" y="4.5" width="17" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.75"/>
-            <path d="M9 4.5v15" fill="none" stroke="currentColor" stroke-width="1.75"/>
-          </svg>
-        </button>
       </div>
       <input id="search" type="search" placeholder="Search sessions" autocomplete="off" aria-label="Search sessions">
       <button id="new-session" class="text-btn" type="button">New session</button>
@@ -564,19 +639,6 @@
     <footer id="side-foot" role="status"></footer>
   </aside>
   <main id="main">
-    <header id="top">
-      <button id="menu" class="icon-btn" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="Show sessions">
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-          <rect x="3.5" y="4.5" width="17" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.75"/>
-          <path d="M9 4.5v15" fill="none" stroke="currentColor" stroke-width="1.75"/>
-        </svg>
-      </button>
-      <label>Project
-        <select id="project" aria-label="Project"></select>
-      </label>
-      <button id="library-btn" type="button">Library</button>
-      <button id="settings-btn" type="button">Settings</button>
-    </header>
     <div id="session-bar">
       <div>
         <h1 id="title">Openview</h1>
@@ -587,9 +649,9 @@
         <button id="delete" class="ghost danger" type="button" hidden>Delete</button>
       </div>
     </div>
-    <div id="changes" hidden>
-      <button id="changes-toggle" class="ghost" type="button" aria-expanded="false" aria-controls="changes-panel"></button>
-      <div id="changes-panel" hidden></div>
+    <div id="revert-bar" hidden>
+      <p>Undone from a message. Later messages are set aside, and the files are back to that point.</p>
+      <button id="revert-restore" class="ghost" type="button">Restore</button>
     </div>
     <div id="banner" hidden role="status"></div>
     <div id="stream"></div>
@@ -606,6 +668,17 @@
       </div>
     </form>
   </main>
+  <aside id="changes" hidden>
+    <div class="side-head">
+      <div class="brand">
+        <strong>Changes</strong>
+      </div>
+      <p id="changes-meta" class="path mono"></p>
+    </div>
+    <div id="changes-list"></div>
+    <div id="changes-diff" hidden></div>
+  </aside>
+  </div>
 </div>
 
 <dialog id="settings-dialog">
@@ -719,7 +792,6 @@ const state = {
   libraryAgents: [],
   librarySkills: [],
   changesGen: 0,
-  changesOpen: false,
   changesOpenFile: "",
   changes: { loaded: false, git: false, branch: "", directory: "", sessionId: "", status: [], sessionFiles: [], patches: null },
 }
@@ -860,6 +932,7 @@ function loadLocal() {
   state.agent = localStorage.getItem("oc-ui-agent") || ""
   state.model = localStorage.getItem("oc-ui-model") || ""
   if (localStorage.getItem("oc-ui-sidebar") === "closed") $("app").classList.add("sidebar-collapsed")
+  if (localStorage.getItem("oc-ui-changes") === "closed") $("app").classList.add("changes-collapsed")
 }
 
 function projectLabel(dir) {
@@ -905,6 +978,7 @@ function normalizeApi(session) {
     projectID: session.projectID,
     parentID: session.parentID || undefined,
     time: session.time || { created: 0, updated: 0 },
+    revert: session.revert?.messageID ? { messageID: session.revert.messageID } : null,
     fromApi: true,
   }
 }
@@ -939,9 +1013,14 @@ function applySessionInfo(info) {
   if (!next.directory && prev.directory) next.directory = prev.directory
   next.fromDb = Boolean(prev.fromDb)
   next.unavailable = false
+  const revertChanged = (prev.revert?.messageID || "") !== (next.revert?.messageID || "")
   state.sessions.set(info.id, next)
   scheduleSidebar()
-  if (info.id === state.activeId) renderHeader()
+  if (info.id === state.activeId) {
+    renderHeader()
+    renderRevertBar()
+    if (revertChanged) renderStream()
+  }
 }
 
 function isBusy(id) {
@@ -1116,8 +1195,14 @@ function renderProjectSelect() {
   select.value = wanted
 }
 
+function renderRevertBar() {
+  const session = currentSession()
+  $("revert-bar").hidden = !session?.revert?.messageID
+}
+
 function renderHeader() {
   const session = currentSession()
+  renderRevertBar()
   const title = $("title")
   if (title.querySelector("input")) return
   title.textContent = session ? (session.title || "Untitled") : "Openview"
@@ -1136,10 +1221,44 @@ function renderHeader() {
 
 function clearChanges() {
   state.changesGen += 1
-  state.changesOpen = false
   state.changesOpenFile = ""
   state.changes = { loaded: false, git: false, branch: "", directory: "", sessionId: "", status: [], sessionFiles: [], patches: null }
   renderChanges()
+}
+
+function statusMark(status) {
+  if (status === "added") return "A"
+  if (status === "deleted") return "D"
+  if (status === "modified") return "M"
+  return "•"
+}
+
+function middlePath(file) {
+  const text = String(file || "")
+  const max = 32
+  if (text.length <= max) return text
+  const base = text.split("/").pop() || text
+  if (base.length >= max - 1) return `…${base.slice(-(max - 1))}`
+  const dir = text.slice(0, text.length - base.length)
+  const keep = Math.max(1, max - base.length - 2)
+  return `${dir.slice(0, keep)}…/${base}`
+}
+
+function selectedChange() {
+  const key = state.changesOpenFile
+  if (!key) return null
+  const splitAt = key.indexOf(":")
+  const source = key.slice(0, splitAt)
+  const file = key.slice(splitAt + 1)
+  const rows = source === "session" ? state.changes.sessionFiles : state.changes.status
+  const row = rows.find((item) => item.file === file)
+  return row ? { key, source, file, row } : null
+}
+
+function cachedPatch(row, source) {
+  if (source === "session" && row.patch) return row.patch
+  if (!state.changes.patches) return undefined
+  return state.changes.patches.get(row.file) || ""
 }
 
 function changesLabel() {
@@ -1171,70 +1290,86 @@ function renderPatch(text) {
 
 function renderChangeGroup(title, rows, source) {
   const group = el("div")
-  if (title) group.append(el("div", "change-label", title))
+  if (title) group.append(el("h2", "change-label", title))
   if (!rows.length) {
     group.append(el("div", "change-empty", "No uncommitted changes."))
     return group
   }
   for (const row of rows) {
-    const line = el("div", "change-row")
-    const status = el("span", `change-status ${row.status || ""}`, row.status || "changed")
-    const file = el("span", "change-file mono", row.file || "")
-    file.title = row.file || ""
-    const count = el("span", "change-count")
-    count.append(el("span", "add", `+${row.additions || 0}`))
-    count.append(el("span", null, " "))
-    count.append(el("span", "del", `−${row.deletions || 0}`))
     const open = state.changesOpenFile === `${source}:${row.file}`
-    const diff = el("button", "ghost change-diff", open ? "Hide" : "Diff")
-    diff.type = "button"
-    diff.setAttribute("aria-expanded", String(open))
-    diff.addEventListener("click", () => toggleDiff(row, source))
-    line.append(status, file, count, diff)
+    const line = el("button", "change-row" + (open ? " active" : ""))
+    line.type = "button"
+    line.setAttribute("aria-pressed", String(open))
+    line.title = row.file || ""
+    const mark = el("span", `change-mark mono ${row.status || ""}`, statusMark(row.status))
+    const file = el("span", "change-file mono", middlePath(row.file))
+    const count = el("span", "change-count mono")
+    count.append(el("span", "add", `+${row.additions || 0}`))
+    if (row.deletions) {
+      count.append(el("span", null, " "))
+      count.append(el("span", "del", `−${row.deletions}`))
+    }
+    line.append(mark, file, count)
+    line.addEventListener("click", () => toggleDiff(row, source))
     group.append(line)
-    if (!open) continue
-    const patch = source === "session" && row.patch ? row.patch : state.changes.patches?.get(row.file)
-    const box = el("div", "change-patch")
-    if (state.changes.diffLoading === `${source}:${row.file}`) box.append(el("div", "change-empty", "Loading diff…"))
-    else if (patch) {
-      const head = el("div", "codehead")
-      head.append(el("span", null, row.file), copyButton(patch))
-      const block = el("div", "codeblock")
-      block.append(head, renderPatch(patch))
-      box.append(block)
-    } else if (state.changes.diffError) box.append(el("div", "change-empty", state.changes.diffError))
-    group.append(box)
   }
   return group
+}
+
+function renderChangeDiff() {
+  const box = $("changes-diff")
+  const selected = selectedChange()
+  if (!selected) {
+    box.hidden = true
+    box.replaceChildren()
+    return
+  }
+  box.hidden = false
+  box.replaceChildren()
+  const patch = cachedPatch(selected.row, selected.source)
+  const head = el("div", "codehead")
+  const name = el("span", "mono", selected.file)
+  name.title = selected.file
+  head.append(name)
+  if (patch) head.append(copyButton(patch))
+  const block = el("div", "codeblock")
+  block.append(head)
+  if (state.changes.diffLoading === selected.key) block.append(el("div", "change-empty", "Loading diff…"))
+  else if (patch) block.append(renderPatch(patch))
+  else if (patch === "") block.append(el("div", "change-empty", "No diff for this file."))
+  else if (state.changes.diffError) block.append(el("div", "change-empty", state.changes.diffError))
+  else block.append(el("div", "change-empty", "Loading diff…"))
+  box.append(block)
 }
 
 function renderChanges() {
   const root = $("changes")
   const session = currentSession()
   const changes = state.changes
-  const label = session && changes.loaded && changes.directory === session.directory ? changesLabel() : ""
-  if (!label) {
-    root.hidden = true
+  const useful = Boolean(session && changes.loaded && changes.directory === session.directory)
+  root.hidden = !useful
+  if (!useful) {
+    syncChanges()
     return
   }
-  root.hidden = false
-  const toggle = $("changes-toggle")
-  toggle.textContent = label
-  toggle.setAttribute("aria-expanded", String(state.changesOpen))
-  const panel = $("changes-panel")
-  panel.hidden = !state.changesOpen
-  if (!state.changesOpen) return
-  panel.replaceChildren()
-  if (changes.sessionFiles.length) panel.append(renderChangeGroup("This session", changes.sessionFiles, "session"))
-  if (changes.git) panel.append(renderChangeGroup(changes.sessionFiles.length ? "Working tree" : "", changes.status, "git"))
+  $("changes-meta").textContent = changesLabel()
+  const list = $("changes-list")
+  const scroll = list.scrollTop
+  list.replaceChildren()
+  if (changes.sessionFiles.length) list.append(renderChangeGroup("This session", changes.sessionFiles, "session"))
+  if (changes.git) list.append(renderChangeGroup("Modified files", changes.status, "git"))
+  list.scrollTop = scroll
+  renderChangeDiff()
+  syncChanges()
+  const selected = selectedChange()
+  if (selected && !state.changes.diffError && cachedPatch(selected.row, selected.source) === undefined && state.changes.diffLoading !== selected.key) {
+    ensureDiff(selected.row, selected.source)
+  }
 }
 
 async function loadChanges(directory, sessionId, keep) {
   const gen = ++state.changesGen
-  if (!keep) {
-    state.changesOpen = false
-    state.changesOpenFile = ""
-  }
+  if (!keep) state.changesOpenFile = ""
   if (!directory) {
     state.changes = { loaded: false, git: false, branch: "", directory: "", sessionId: "", status: [], sessionFiles: [], patches: null }
     renderChanges()
@@ -1280,7 +1415,6 @@ async function loadChanges(directory, sessionId, keep) {
     diffLoading: "",
     diffError: "",
   }
-  if (!useful) state.changesOpen = false
   if (state.changesOpenFile) {
     const splitAt = state.changesOpenFile.indexOf(":")
     const source = state.changesOpenFile.slice(0, splitAt)
@@ -1291,21 +1425,11 @@ async function loadChanges(directory, sessionId, keep) {
   renderChanges()
 }
 
-async function toggleDiff(row, source) {
+async function ensureDiff(row, source) {
   const key = `${source}:${row.file}`
-  if (state.changesOpenFile === key) {
-    state.changesOpenFile = ""
-    renderChanges()
-    return
-  }
-  state.changesOpenFile = key
-  state.changes.diffError = ""
-  const cached = source === "session" && row.patch ? row.patch : state.changes.patches?.get(row.file)
-  if (cached) {
-    renderChanges()
-    return
-  }
+  if (cachedPatch(row, source) !== undefined || state.changes.diffLoading === key) return
   state.changes.diffLoading = key
+  state.changes.diffError = ""
   renderChanges()
   const directory = state.changes.directory
   try {
@@ -1320,15 +1444,26 @@ async function toggleDiff(row, source) {
       }
       state.changes.patches = patches
     }
-    if (!state.changes.patches?.get(row.file) && !(source === "session" && row.patch)) {
-      state.changes.diffError = "No diff for this file."
-    }
   } catch {
-    state.changes.diffError = "Couldn't load the diff."
+    if (state.changes.directory === directory) state.changes.diffError = "Couldn't load the diff."
   } finally {
-    if (state.changes.diffLoading === key) state.changes.diffLoading = ""
-    renderChanges()
+    if (state.changes.directory === directory && state.changes.diffLoading === key) {
+      state.changes.diffLoading = ""
+      renderChanges()
+    }
   }
+}
+
+function toggleDiff(row, source) {
+  const key = `${source}:${row.file}`
+  if (state.changesOpenFile === key) {
+    state.changesOpenFile = ""
+    renderChanges()
+    return
+  }
+  state.changesOpenFile = key
+  state.changes.diffError = ""
+  renderChanges()
 }
 
 function renderPickers() {
@@ -2008,11 +2143,20 @@ function formatCost(value) {
   return "$" + value.toFixed(value < 0.01 ? 4 : 2)
 }
 
+function revertCut() {
+  const id = currentSession()?.revert?.messageID
+  if (!id) return -1
+  return state.messages.findIndex((item) => item.info?.id === id)
+}
+
 function renderMessageNode(message) {
   const info = message.info || {}
   const role = info.role || "assistant"
+  const cut = revertCut()
+  const undone = cut !== -1 && state.messages.indexOf(message) >= cut
   const article = el("article", "msg msg-" + role)
   article.dataset.id = info.id || ""
+  if (undone) article.classList.add("reverted")
   if (role === "user") {
     article.append(el("p", "kicker", "You"))
     const body = el("div", "user-body")
@@ -2033,6 +2177,19 @@ function renderMessageNode(message) {
     }
     if (!any) body.append(el("p", null, ""))
     article.append(body)
+    if (undone) {
+      const note = el("p", "kicker", "Undone")
+      note.style.marginTop = "6px"
+      article.append(note)
+    } else if (String(info.id || "").startsWith("msg")) {
+      const actions = el("div", "msg-actions")
+      const undo = el("button", "ghost", "Undo")
+      undo.type = "button"
+      undo.title = "Undo this message and everything after it"
+      undo.addEventListener("click", () => revertTo(info.id))
+      actions.append(undo)
+      article.append(actions)
+    }
     return article
   }
   article.append(el("p", "kicker", "Assistant"))
@@ -2611,6 +2768,51 @@ function renderComposer() {
   renderQueue()
 }
 
+async function refreshTranscript(session) {
+  const messages = await getJSON(`/session/${encodeURIComponent(session.id)}/message?limit=300`, session.directory)
+  if (session.id !== state.activeId) return
+  state.messages = Array.isArray(messages) ? messages : []
+  sortMessages()
+  state.stick = true
+  renderStream()
+  loadChanges(session.directory, session.id, true)
+}
+
+async function revertTo(messageID) {
+  const session = currentSession()
+  if (!session || !messageID) return
+  if (isBusy(session.id)) {
+    showBanner("Wait until the session is idle.")
+    return
+  }
+  if (!confirm("Undo this message and everything after it? Files written after this point go back to how they were.")) return
+  try {
+    const updated = await request("POST", `/session/${encodeURIComponent(session.id)}/revert`, session.directory, { messageID })
+    if (updated?.id) applySessionInfo(updated)
+    await refreshTranscript(session)
+  } catch (err) {
+    if (err.status === 409) showBanner("The session is still working.")
+    else if (!err.offline) showBanner(err.message || "Couldn't undo that message.")
+  }
+}
+
+async function restoreReverted() {
+  const session = currentSession()
+  if (!session?.revert?.messageID) return
+  if (isBusy(session.id)) {
+    showBanner("Wait until the session is idle.")
+    return
+  }
+  try {
+    const updated = await request("POST", `/session/${encodeURIComponent(session.id)}/unrevert`, session.directory)
+    if (updated?.id) applySessionInfo(updated)
+    await refreshTranscript(session)
+  } catch (err) {
+    if (err.status === 409) showBanner("The session is still working.")
+    else if (!err.offline) showBanner(err.message || "Couldn't restore the session.")
+  }
+}
+
 async function postPrompt(sessionId, text) {
   const session = state.sessions.get(sessionId)
   if (!session) return
@@ -2833,7 +3035,49 @@ function syncSidebar() {
   const expanded = sidebarNarrow() ? sidebar.classList.contains("open") : !collapsed
   sidebar.inert = !expanded
   $("menu").setAttribute("aria-expanded", expanded ? "true" : "false")
-  $("hide-sessions").setAttribute("aria-expanded", expanded ? "true" : "false")
+  $("menu").setAttribute("aria-label", expanded ? "Hide sessions" : "Show sessions")
+  syncScrim()
+}
+
+function changesCollapsed() {
+  return $("app").classList.contains("changes-collapsed")
+}
+
+function syncChanges() {
+  const panel = $("changes")
+  const narrow = sidebarNarrow()
+  const collapsed = changesCollapsed()
+  const expanded = !panel.hidden && (narrow ? panel.classList.contains("open") : !collapsed)
+  panel.inert = !expanded
+  const show = $("show-changes")
+  show.hidden = panel.hidden
+  show.setAttribute("aria-expanded", expanded ? "true" : "false")
+  show.setAttribute("aria-label", expanded ? "Hide changes" : "Show changes")
+  syncScrim()
+}
+
+function rememberChanges(collapsed) {
+  $("app").classList.toggle("changes-collapsed", collapsed)
+  localStorage.setItem("oc-ui-changes", collapsed ? "closed" : "open")
+  if (collapsed) $("changes").classList.remove("open")
+  syncChanges()
+}
+
+function collapseChanges() {
+  rememberChanges(true)
+  if (!$("show-changes").hidden) $("show-changes").focus()
+}
+
+function expandChanges() {
+  if ($("changes").hidden) return
+  if (sidebarNarrow()) {
+    $("sidebar").classList.remove("open")
+    $("changes").classList.add("open")
+    syncSidebar()
+    syncChanges()
+    return
+  }
+  rememberChanges(false)
 }
 
 function rememberSidebar(collapsed) {
@@ -2842,16 +3086,27 @@ function rememberSidebar(collapsed) {
   syncSidebar()
 }
 
+function syncScrim() {
+  if (!sidebarNarrow()) {
+    $("scrim").classList.remove("show")
+    return
+  }
+  const open = $("sidebar").classList.contains("open") || $("changes").classList.contains("open")
+  $("scrim").classList.toggle("show", open)
+}
+
 function closeDrawer() {
   $("sidebar").classList.remove("open")
-  $("scrim").classList.remove("show")
+  $("changes").classList.remove("open")
   syncSidebar()
+  syncChanges()
 }
 
 function openDrawer() {
+  $("changes").classList.remove("open")
   $("sidebar").classList.add("open")
-  $("scrim").classList.add("show")
   syncSidebar()
+  syncChanges()
   $("search").focus()
 }
 
@@ -3102,11 +3357,27 @@ function bind() {
       else openDrawer()
       return
     }
-    expandSidebar()
+    if ($("app").classList.contains("sidebar-collapsed")) expandSidebar()
+    else collapseSidebar()
   })
-  $("hide-sessions").addEventListener("click", collapseSidebar)
-  window.matchMedia("(max-width: 760px)").addEventListener("change", syncSidebar)
+  window.matchMedia("(max-width: 760px)").addEventListener("change", () => {
+    syncSidebar()
+    syncChanges()
+  })
   syncSidebar()
+  syncChanges()
+  $("show-changes").addEventListener("click", () => {
+    if ($("changes").hidden) return
+    if (sidebarNarrow()) {
+      if ($("changes").classList.contains("open")) {
+        $("changes").classList.remove("open")
+        syncChanges()
+      } else expandChanges()
+      return
+    }
+    if (changesCollapsed()) expandChanges()
+    else collapseChanges()
+  })
   $("scrim").addEventListener("click", closeDrawer)
   $("library-btn").addEventListener("click", openLibrary)
   $("lib-tab-agent").addEventListener("click", () => {
@@ -3135,11 +3406,7 @@ function bind() {
   $("lib-body").addEventListener("input", () => { $("lib-result").hidden = true })
   $("lib-close").addEventListener("click", () => $("library-dialog").close())
   $("library-form").addEventListener("submit", saveLibrary)
-  $("changes-toggle").addEventListener("click", () => {
-    state.changesOpen = !state.changesOpen
-    if (!state.changesOpen) state.changesOpenFile = ""
-    renderChanges()
-  })
+  $("revert-restore").addEventListener("click", restoreReverted)
   $("settings-btn").addEventListener("click", openSettings)
   $("settings-dialog").addEventListener("close", () => {
     if ($("settings-dialog").returnValue !== "save") return
