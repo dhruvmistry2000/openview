@@ -214,6 +214,55 @@
   #new-session { text-align: left; align-self: flex-start; }
   #session-bar h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
   .path { margin: 2px 0 0; color: var(--ink-soft); font-size: 12px; }
+  #changes {
+    width: min(760px, calc(100% - 40px));
+    margin: 6px auto 0;
+  }
+  #changes-toggle { color: var(--ink-soft); font-size: 12.5px; }
+  #changes-panel {
+    margin-top: 8px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    max-height: 320px;
+    overflow: auto;
+  }
+  .change-label {
+    padding: 8px 10px 2px;
+    color: var(--ink-soft);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .change-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+  }
+  .change-row + .change-row { border-top: 1px solid var(--line); }
+  .change-status { width: 5.4em; flex: none; font-size: 12px; }
+  .change-status.added { color: var(--ok); }
+  .change-status.deleted { color: var(--danger); }
+  .change-status.modified { color: var(--warn); }
+  .change-file {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12.5px;
+  }
+  .change-count { flex: none; font-size: 12px; color: var(--ink-soft); }
+  .change-count .add { color: var(--ok); }
+  .change-count .del { color: var(--danger); }
+  .change-diff { flex: none; font-size: 12px; padding: 4px 8px; }
+  .change-patch { padding: 0 10px 8px; }
+  .change-patch .codeblock { margin: 0; }
+  .patch { max-height: 280px; margin: 0; overflow: auto; }
+  .patch .add { color: var(--ok); }
+  .patch .del { color: var(--danger); }
+  .patch .hunk { color: var(--cobalt); }
+  .change-empty { padding: 10px; color: var(--ink-soft); font-size: 13px; }
   .bar-actions { display: flex; gap: 6px; flex: none; }
   #banner {
     width: min(760px, calc(100% - 40px));
@@ -366,38 +415,92 @@
   dialog label { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; font-size: 13px; color: var(--ink-soft); }
   dialog .composer-row { justify-content: flex-end; }
   #library-dialog {
-    width: min(560px, calc(100vw - 28px));
-    max-height: min(860px, calc(100dvh - 28px));
-    overflow: auto;
+    width: min(460px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    padding: 0;
+    overflow: hidden;
   }
-  .seg { display: flex; gap: 4px; margin: 0 0 12px; }
-  .seg button[aria-selected="true"] { color: var(--ink); background: var(--fill); }
+  #library-form {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 32px);
+    min-height: 0;
+    margin: 0;
+  }
+  .lib-head { padding: 16px 16px 0; }
+  .lib-head h2 { margin-bottom: 12px; }
+  .lib-scroll {
+    overflow: auto;
+    min-height: 0;
+    padding: 12px 16px 4px;
+  }
+  .lib-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--line);
+  }
+  .seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin: 0;
+    padding: 2px;
+    background: var(--fill);
+    border-radius: 9px;
+  }
+  .seg button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--ink-soft);
+    border-radius: 7px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .seg button[aria-selected="true"] {
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .lib-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .lib-pair:has(label[hidden]) { grid-template-columns: 1fr; }
+  .lib-pair label { min-width: 0; }
   .lib-list {
-    max-height: 132px;
+    max-height: 88px;
     overflow: auto;
     border: 1px solid var(--line);
     border-radius: 8px;
     margin: 0 0 12px;
-    padding: 4px;
+    padding: 2px;
   }
   .lib-row {
     display: flex;
     justify-content: space-between;
     gap: 10px;
-    padding: 5px 6px;
+    padding: 3px 8px;
     font-size: 13px;
   }
   .lib-row span:last-child {
     color: var(--ink-soft);
     font-size: 12px;
     text-align: right;
+    white-space: nowrap;
   }
-  .hint { margin: -4px 0 10px; color: var(--ink-soft); font-size: 12px; line-height: 1.4; }
+  .hint { margin: -2px 0 12px; color: var(--ink-soft); font-size: 12px; line-height: 1.4; }
   .hint.warn { color: var(--danger); }
-  #lib-body { min-height: 132px; resize: vertical; }
+  .field::placeholder { color: var(--ink-soft); opacity: 0.7; }
+  #lib-body { min-height: 72px; max-height: 160px; resize: vertical; }
+  #lib-result { margin-bottom: 8px; }
   #lib-result .codeblock { margin-top: 8px; }
+  #lib-path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #lib-save { background: var(--ink); color: var(--paper); border-color: transparent; padding: 7px 14px; font-weight: 500; }
   #lib-save:disabled { opacity: 0.45; cursor: default; }
+  @media (max-width: 560px) {
+    .lib-pair { grid-template-columns: 1fr; }
+  }
   .q-block { margin-bottom: 8px; }
   .q-block strong { display: block; font-size: 14px; }
   @media (min-width: 761px) {
@@ -429,7 +532,7 @@
     #project { max-width: none; }
     input, select, textarea { font-size: 16px; }
     #stream { padding-left: 14px; padding-right: 14px; }
-    #session-bar, #prompts, #banner { width: min(760px, calc(100% - 28px)); }
+    #session-bar, #changes, #prompts, #banner { width: min(760px, calc(100% - 28px)); }
     #composer { width: min(792px, calc(100% - 20px)); border-radius: 14px; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -484,6 +587,10 @@
         <button id="delete" class="ghost danger" type="button" hidden>Delete</button>
       </div>
     </div>
+    <div id="changes" hidden>
+      <button id="changes-toggle" class="ghost" type="button" aria-expanded="false" aria-controls="changes-panel"></button>
+      <div id="changes-panel" hidden></div>
+    </div>
     <div id="banner" hidden role="status"></div>
     <div id="stream"></div>
     <button id="jump" class="ghost" type="button" hidden>Jump to latest</button>
@@ -517,40 +624,47 @@
 
 <dialog id="library-dialog">
   <form id="library-form">
-    <h2>Agents and skills</h2>
-    <p id="lib-lead"></p>
-    <div class="seg" role="tablist" aria-label="What to add">
-      <button id="lib-tab-agent" type="button" role="tab" aria-selected="true">Agent</button>
-      <button id="lib-tab-skill" type="button" role="tab" aria-selected="false">Skill</button>
+    <div class="lib-head">
+      <h2>Agents and skills</h2>
+      <div class="seg" role="tablist" aria-label="What to add">
+        <button id="lib-tab-agent" type="button" role="tab" aria-selected="true">Agent</button>
+        <button id="lib-tab-skill" type="button" role="tab" aria-selected="false">Skill</button>
+      </div>
     </div>
-    <div id="lib-list" class="lib-list" role="list"></div>
-    <label>Where
-      <select id="lib-scope" class="field">
-        <option value="project">This project</option>
-        <option value="global">Every project</option>
-      </select>
-    </label>
-    <label id="lib-project-wrap">Project
-      <select id="lib-project" class="field"></select>
-    </label>
-    <label>Name
-      <input id="lib-name" class="field" autocomplete="off" spellcheck="false" placeholder="review-notes">
-    </label>
-    <p class="hint" id="lib-path"></p>
-    <label>Description
-      <input id="lib-desc" class="field" autocomplete="off" placeholder="What it does, and when to use it">
-    </label>
-    <label id="lib-mode-wrap">Mode
-      <select id="lib-mode" class="field">
-        <option value="primary">Primary — listed in the agent menu</option>
-        <option value="subagent">Subagent — used by another agent</option>
-      </select>
-    </label>
-    <label>Instructions
-      <textarea id="lib-body" class="field" rows="7" spellcheck="true" placeholder="The steps to follow."></textarea>
-    </label>
-    <div id="lib-result" hidden></div>
-    <div class="composer-row">
+    <div class="lib-scroll">
+      <div id="lib-list" class="lib-list" role="list"></div>
+      <div class="lib-pair">
+        <label>Where
+          <select id="lib-scope" class="field">
+            <option value="project">This project</option>
+            <option value="global">Every project</option>
+          </select>
+        </label>
+        <label id="lib-project-wrap">Project
+          <select id="lib-project" class="field"></select>
+        </label>
+      </div>
+      <div class="lib-pair">
+        <label>Name
+          <input id="lib-name" class="field" autocomplete="off" spellcheck="false" placeholder="review-notes">
+        </label>
+        <label id="lib-mode-wrap">Mode
+          <select id="lib-mode" class="field">
+            <option value="primary">Primary</option>
+            <option value="subagent">Subagent</option>
+          </select>
+        </label>
+      </div>
+      <p class="hint mono" id="lib-path"></p>
+      <label>Description
+        <input id="lib-desc" class="field" autocomplete="off" placeholder="What it does, and when to use it">
+      </label>
+      <label>Instructions
+        <textarea id="lib-body" class="field" rows="4" spellcheck="true" placeholder="The steps to follow."></textarea>
+      </label>
+      <div id="lib-result" hidden></div>
+    </div>
+    <div class="lib-foot">
       <button id="lib-close" class="ghost" type="button">Close</button>
       <button id="lib-save" type="submit">Save file</button>
     </div>
@@ -604,6 +718,10 @@ const state = {
   libraryKind: "agent",
   libraryAgents: [],
   librarySkills: [],
+  changesGen: 0,
+  changesOpen: false,
+  changesOpenFile: "",
+  changes: { loaded: false, git: false, branch: "", directory: "", sessionId: "", status: [], sessionFiles: [], patches: null },
 }
 
 const $ = (id) => document.getElementById(id)
@@ -1012,7 +1130,205 @@ function renderHeader() {
   if (busy) path.textContent = (session.directory ? session.directory + " · " : "") + "working"
   $("rename").hidden = !session
   $("delete").hidden = !session
+  renderChanges()
   renderComposer()
+}
+
+function clearChanges() {
+  state.changesGen += 1
+  state.changesOpen = false
+  state.changesOpenFile = ""
+  state.changes = { loaded: false, git: false, branch: "", directory: "", sessionId: "", status: [], sessionFiles: [], patches: null }
+  renderChanges()
+}
+
+function changesLabel() {
+  const changes = state.changes
+  if (!changes.loaded) return ""
+  const parts = []
+  if (changes.git && changes.branch) parts.push(changes.branch)
+  if (changes.git) parts.push(changes.status.length ? `${changes.status.length} changed` : "clean")
+  if (changes.sessionFiles.length) parts.push(`${changes.sessionFiles.length} in this session`)
+  return parts.join(" · ")
+}
+
+function renderPatch(text) {
+  const pre = el("pre", "patch")
+  const code = el("code")
+  const lines = String(text || "").split("\n")
+  const shown = lines.slice(0, 4000)
+  for (const line of shown) {
+    let kind = ""
+    if (line.startsWith("@@")) kind = "hunk"
+    else if (line.startsWith("+") && !line.startsWith("+++")) kind = "add"
+    else if (line.startsWith("-") && !line.startsWith("---")) kind = "del"
+    code.append(el("span", kind, `${line}\n`))
+  }
+  if (lines.length > shown.length) code.append(el("span", "hunk", `\n… ${lines.length - shown.length} more lines\n`))
+  pre.append(code)
+  return pre
+}
+
+function renderChangeGroup(title, rows, source) {
+  const group = el("div")
+  if (title) group.append(el("div", "change-label", title))
+  if (!rows.length) {
+    group.append(el("div", "change-empty", "No uncommitted changes."))
+    return group
+  }
+  for (const row of rows) {
+    const line = el("div", "change-row")
+    const status = el("span", `change-status ${row.status || ""}`, row.status || "changed")
+    const file = el("span", "change-file mono", row.file || "")
+    file.title = row.file || ""
+    const count = el("span", "change-count")
+    count.append(el("span", "add", `+${row.additions || 0}`))
+    count.append(el("span", null, " "))
+    count.append(el("span", "del", `−${row.deletions || 0}`))
+    const open = state.changesOpenFile === `${source}:${row.file}`
+    const diff = el("button", "ghost change-diff", open ? "Hide" : "Diff")
+    diff.type = "button"
+    diff.setAttribute("aria-expanded", String(open))
+    diff.addEventListener("click", () => toggleDiff(row, source))
+    line.append(status, file, count, diff)
+    group.append(line)
+    if (!open) continue
+    const patch = source === "session" && row.patch ? row.patch : state.changes.patches?.get(row.file)
+    const box = el("div", "change-patch")
+    if (state.changes.diffLoading === `${source}:${row.file}`) box.append(el("div", "change-empty", "Loading diff…"))
+    else if (patch) {
+      const head = el("div", "codehead")
+      head.append(el("span", null, row.file), copyButton(patch))
+      const block = el("div", "codeblock")
+      block.append(head, renderPatch(patch))
+      box.append(block)
+    } else if (state.changes.diffError) box.append(el("div", "change-empty", state.changes.diffError))
+    group.append(box)
+  }
+  return group
+}
+
+function renderChanges() {
+  const root = $("changes")
+  const session = currentSession()
+  const changes = state.changes
+  const label = session && changes.loaded && changes.directory === session.directory ? changesLabel() : ""
+  if (!label) {
+    root.hidden = true
+    return
+  }
+  root.hidden = false
+  const toggle = $("changes-toggle")
+  toggle.textContent = label
+  toggle.setAttribute("aria-expanded", String(state.changesOpen))
+  const panel = $("changes-panel")
+  panel.hidden = !state.changesOpen
+  if (!state.changesOpen) return
+  panel.replaceChildren()
+  if (changes.sessionFiles.length) panel.append(renderChangeGroup("This session", changes.sessionFiles, "session"))
+  if (changes.git) panel.append(renderChangeGroup(changes.sessionFiles.length ? "Working tree" : "", changes.status, "git"))
+}
+
+async function loadChanges(directory, sessionId, keep) {
+  const gen = ++state.changesGen
+  if (!keep) {
+    state.changesOpen = false
+    state.changesOpenFile = ""
+  }
+  if (!directory) {
+    state.changes = { loaded: false, git: false, branch: "", directory: "", sessionId: "", status: [], sessionFiles: [], patches: null }
+    renderChanges()
+    return
+  }
+  let git = false
+  let branch = ""
+  try {
+    const info = await getJSON("/vcs", directory)
+    if (gen !== state.changesGen) return
+    if (info && typeof info.branch === "string" && info.branch) {
+      git = true
+      branch = info.branch
+    }
+  } catch { /* not a git checkout, or the route is missing */ }
+  let status = []
+  if (git) {
+    try {
+      const rows = await getJSON("/vcs/status", directory)
+      if (gen !== state.changesGen) return
+      if (Array.isArray(rows)) status = rows.filter((row) => row && row.file)
+    } catch { /* status is optional */ }
+  }
+  let sessionFiles = []
+  if (sessionId) {
+    try {
+      const rows = await getJSON(`/session/${encodeURIComponent(sessionId)}/diff`, directory)
+      if (gen !== state.changesGen) return
+      if (Array.isArray(rows)) sessionFiles = rows.filter((row) => row && row.file)
+    } catch { /* session diff is optional */ }
+  }
+  if (gen !== state.changesGen) return
+  const useful = git || sessionFiles.length > 0
+  state.changes = {
+    loaded: useful,
+    git,
+    branch,
+    directory,
+    sessionId,
+    status,
+    sessionFiles,
+    patches: null,
+    diffLoading: "",
+    diffError: "",
+  }
+  if (!useful) state.changesOpen = false
+  if (state.changesOpenFile) {
+    const splitAt = state.changesOpenFile.indexOf(":")
+    const source = state.changesOpenFile.slice(0, splitAt)
+    const file = state.changesOpenFile.slice(splitAt + 1)
+    const rows = source === "session" ? sessionFiles : status
+    if (!rows.some((row) => row.file === file)) state.changesOpenFile = ""
+  }
+  renderChanges()
+}
+
+async function toggleDiff(row, source) {
+  const key = `${source}:${row.file}`
+  if (state.changesOpenFile === key) {
+    state.changesOpenFile = ""
+    renderChanges()
+    return
+  }
+  state.changesOpenFile = key
+  state.changes.diffError = ""
+  const cached = source === "session" && row.patch ? row.patch : state.changes.patches?.get(row.file)
+  if (cached) {
+    renderChanges()
+    return
+  }
+  state.changes.diffLoading = key
+  renderChanges()
+  const directory = state.changes.directory
+  try {
+    if (!state.changes.patches) {
+      const rows = await getJSON("/vcs/diff?mode=git", directory)
+      if (state.changes.directory !== directory) return
+      const patches = new Map()
+      if (Array.isArray(rows)) {
+        for (const item of rows) {
+          if (item?.file) patches.set(item.file, item.patch || "")
+        }
+      }
+      state.changes.patches = patches
+    }
+    if (!state.changes.patches?.get(row.file) && !(source === "session" && row.patch)) {
+      state.changes.diffError = "No diff for this file."
+    }
+  } catch {
+    state.changes.diffError = "Couldn't load the diff."
+  } finally {
+    if (state.changes.diffLoading === key) state.changes.diffLoading = ""
+    renderChanges()
+  }
 }
 
 function renderPickers() {
@@ -1946,7 +2262,13 @@ function onEvent(packet) {
     if (props.sessionID) state.status.set(props.sessionID, props.status || { type: "idle" })
     scheduleSidebar()
     renderComposer()
-    if (props.status?.type === "idle") flushQueue(props.sessionID)
+    if (props.status?.type === "idle") {
+      flushQueue(props.sessionID)
+      if (props.sessionID === state.activeId) {
+        const session = currentSession()
+        if (session?.directory) loadChanges(session.directory, session.id, true)
+      }
+    }
     return
   }
   if (type === "session.idle") {
@@ -1954,6 +2276,10 @@ function onEvent(packet) {
     scheduleSidebar()
     renderComposer()
     flushQueue(props.sessionID)
+    if (props.sessionID === state.activeId) {
+      const session = currentSession()
+      if (session?.directory) loadChanges(session.directory, session.id, true)
+    }
     return
   }
   if (type === "session.error") {
@@ -2186,6 +2512,7 @@ async function openSession(id) {
   state.activeId = id
   state.unavailable = false
   state.stick = true
+  clearChanges()
   state.loadGen += 1
   const gen = state.loadGen
   setHash(id)
@@ -2230,6 +2557,7 @@ async function openSession(id) {
     renderStream()
     $("stream").scrollTop = $("stream").scrollHeight
     loadPickers(directory)
+    loadChanges(directory, id)
   } catch (err) {
     if (gen !== state.loadGen) return
     state.loadingMessages = false
@@ -2549,33 +2877,27 @@ function libraryDirectory() {
 }
 
 function libraryPath() {
-  const name = $("lib-name").value.trim()
+  const name = $("lib-name").value.trim() || "name"
   const skill = state.libraryKind === "skill"
-  const global = $("lib-scope").value === "global"
-  const file = skill ? `skills/${name || "name"}/SKILL.md` : `agents/${name || "name"}.md`
-  if (global) return `~/.config/opencode/${file}`
-  const dir = ($("lib-project").value || "").replace(/\/+$/, "")
-  return `${dir || "<project>"}/.opencode/${file}`
+  const file = skill ? `skills/${name}/SKILL.md` : `agents/${name}.md`
+  if ($("lib-scope").value === "global") return `~/.config/opencode/${file}`
+  const dir = $("lib-project").value
+  return `${dir ? projectLabel(dir) : "project"}/.opencode/${file}`
 }
 
 function syncLibraryForm() {
   const skill = state.libraryKind === "skill"
   $("lib-tab-agent").setAttribute("aria-selected", String(!skill))
   $("lib-tab-skill").setAttribute("aria-selected", String(skill))
-  $("lib-lead").textContent = skill
-    ? "A skill is a SKILL.md file the agent loads when a task matches the description. The folder name and the name field are the same."
-    : "An agent is a markdown file. Primary agents appear in the menu. Subagents are ones another agent can call. The text below the header is its prompt."
   $("lib-mode-wrap").hidden = skill
-  $("lib-body").placeholder = skill
-    ? "The steps to follow once this skill is loaded."
-    : "How this agent should work."
-  const global = $("lib-scope").value === "global"
-  $("lib-project-wrap").hidden = global
+  $("lib-body").placeholder = skill ? "Steps to follow once this skill is loaded." : "How this agent should work."
+  $("lib-project-wrap").hidden = $("lib-scope").value === "global"
   const name = $("lib-name").value.trim()
-  const path = libraryPath()
-  if (!name) $("lib-path").textContent = `Saves to ${path}. Use lowercase words separated by hyphens.`
-  else if (!LIBRARY_NAME.test(name) || name.length > 64) $("lib-path").textContent = "Use lowercase letters, numbers, and single hyphens, up to 64 characters."
-  else $("lib-path").textContent = `Saves to ${path}`
+  const path = $("lib-path")
+  const invalid = name && (!LIBRARY_NAME.test(name) || name.length > 64)
+  path.classList.toggle("warn", Boolean(invalid))
+  path.classList.toggle("mono", !invalid)
+  path.textContent = invalid ? "Lowercase letters, numbers, and single hyphens." : libraryPath()
 }
 
 function shortLocation(location, directory) {
@@ -2589,23 +2911,28 @@ function shortLocation(location, directory) {
 
 function renderLibraryList() {
   const list = $("lib-list")
-  const directory = $("lib-scope").value === "project" ? $("lib-project").value : ""
+  const projectScope = $("lib-scope").value === "project"
+  const directory = projectScope ? $("lib-project").value : ""
   const rows = []
   if (state.libraryKind === "agent") {
     for (const agent of state.libraryAgents) {
-      if (!agent?.name || agent.hidden) continue
-      rows.push({ name: agent.name, meta: agent.native ? "Built in" : (agent.mode || "agent") })
+      if (!agent?.name || agent.hidden || agent.native) continue
+      rows.push({ name: agent.name, meta: agent.mode || "agent" })
     }
   } else {
     for (const skill of state.librarySkills) {
       if (!skill?.name) continue
-      rows.push({ name: skill.name, meta: shortLocation(skill.location, directory) })
+      const where = shortLocation(skill.location, directory)
+      if (where === "Built in") continue
+      if (projectScope && where !== "This project") continue
+      if (!projectScope && where === "This project") continue
+      rows.push({ name: skill.name, meta: where })
     }
   }
   rows.sort((a, b) => a.name.localeCompare(b.name))
   list.replaceChildren()
   if (!rows.length) {
-    list.append(el("div", "lib-row", "Nothing loaded for this project yet."))
+    list.append(el("div", "lib-row", projectScope ? "Nothing in this project yet." : "Nothing saved for every project yet."))
     return
   }
   for (const row of rows) {
@@ -2808,6 +3135,11 @@ function bind() {
   $("lib-body").addEventListener("input", () => { $("lib-result").hidden = true })
   $("lib-close").addEventListener("click", () => $("library-dialog").close())
   $("library-form").addEventListener("submit", saveLibrary)
+  $("changes-toggle").addEventListener("click", () => {
+    state.changesOpen = !state.changesOpen
+    if (!state.changesOpen) state.changesOpenFile = ""
+    renderChanges()
+  })
   $("settings-btn").addEventListener("click", openSettings)
   $("settings-dialog").addEventListener("close", () => {
     if ($("settings-dialog").returnValue !== "save") return

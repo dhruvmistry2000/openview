@@ -102,6 +102,10 @@ The header project menu defaults to **All projects**. That view groups by the la
 
 The client prefers `GET /global/event`, one server-sent stream for every project (`{directory, payload}`). If that route is missing it opens `GET /event?directory=` per project. Streams use `fetch` and a `ReadableStream`, so auth headers work. A dropped stream reconnects after 2 seconds and reloads sessions and the open transcript.
 
+## Changes
+
+With a session open, the line under the path is the git branch and how many files differ from HEAD, plus how many files this session itself changed. Open it to see each file’s status and the added and removed line counts. **Diff** on a row loads that file’s patch. A project that is not a git checkout only shows session files, and the line stays hidden when there is nothing to report. The list refreshes when the session goes idle.
+
 ## Agents and skills
 
 **Library** in the header writes one markdown file through the proxy (`POST /_library`). OpenCode has no create API for these; it discovers files.
