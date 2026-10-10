@@ -1,0 +1,2898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F3F4F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14161A" media="(prefers-color-scheme: dark)">
+<title>Openview</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fog: #F3F4F6;
+    --paper: #F7F8FA;
+    --ink: #1A1D23;
+    --ink-soft: #6A7280;
+    --line: #E4E7EC;
+    --cobalt: #3E56B0;
+    --cobalt-ink: #31468F;
+    --user: #EEF1F6;
+    --ok: #2F7D57;
+    --danger: #A33B42;
+    --warn: #8A5A12;
+    --shadow: rgba(26, 29, 35, 0.06);
+    --fill: color-mix(in srgb, var(--ink) 4.5%, transparent);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fog: #14161A;
+      --paper: #191C21;
+      --ink: #E6E8EC;
+      --ink-soft: #8E97A3;
+      --line: #2A2E35;
+      --cobalt: #A9B7DE;
+      --cobalt-ink: #C9D2EA;
+      --user: #22262E;
+      --ok: #8FB39C;
+      --danger: #E0A8A4;
+      --warn: #D4B483;
+      --shadow: rgba(0, 0, 0, 0.28);
+      --fill: color-mix(in srgb, var(--ink) 6%, transparent);
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 15px/1.55 "Schibsted Grotesk", "Segoe UI", sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid color-mix(in srgb, var(--cobalt) 65%, transparent); outline-offset: 2px; }
+  ::selection { background: color-mix(in srgb, var(--cobalt) 24%, transparent); }
+  * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent; }
+  .mono, code, pre, kbd { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  #app { display: flex; height: 100dvh; min-height: 0; overflow: hidden; }
+  #scrim { display: none; }
+  #sidebar {
+    width: 312px;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--fog);
+    border-right: 1px solid var(--line);
+    padding-top: env(safe-area-inset-top);
+  }
+  .side-head, #top, #side-foot { padding-left: 16px; padding-right: 16px; }
+  .side-head { padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .brand { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .brand strong { font-weight: 600; letter-spacing: -0.03em; }
+  #search, #project, #agent, #model, .rename-input, #set-url, #set-user, #set-pass, #new-project, .q-custom, .field {
+    width: 100%;
+    background: var(--fill);
+    border: 1px solid transparent;
+    border-radius: 9px;
+    padding: 8px 10px;
+  }
+  #search:hover, #project:hover, #agent:hover, #model:hover,
+  .rename-input:hover, #set-url:hover, #set-user:hover, #set-pass:hover, #new-project:hover, .q-custom:hover, .field:hover {
+    border-color: var(--line);
+  }
+  #search:focus, #project:focus, #agent:focus, #model:focus,
+  .rename-input:focus, #set-url:focus, #set-user:focus, #set-pass:focus, #new-project:focus, .q-custom:focus, .field:focus {
+    background: var(--paper);
+    border-color: color-mix(in srgb, var(--cobalt) 40%, var(--line));
+  }
+  #composer:focus-within { border-color: color-mix(in srgb, var(--cobalt) 40%, var(--line)); }
+  #session-list { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 10px 0 8px; }
+  .group { margin: 0 0 14px; }
+  .group h2, .bucket h3 {
+    margin: 0;
+    padding: 14px 18px 4px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink-soft);
+  }
+  .bucket h3 { font-weight: 500; font-size: 11px; letter-spacing: 0.01em; padding-top: 6px; }
+  .session {
+    display: grid;
+    grid-template-columns: 8px minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+    width: calc(100% - 16px);
+    margin: 1px 8px;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    padding: 7px 10px;
+  }
+  .session:hover { background: var(--fill); }
+  .session.active {
+    background: color-mix(in srgb, var(--cobalt) 14%, transparent);
+    box-shadow: inset 2px 0 0 var(--cobalt);
+  }
+  .session-title, .tool-sum, .path, .session-time {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .session-title { display: block; }
+  .session-time { color: var(--ink-soft); font-size: 12px; }
+  .needs { color: var(--cobalt-ink); font-size: 11px; }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: transparent; display: inline-block;
+  }
+  .dot.busy { background: var(--cobalt); animation: pulse 1.4s ease-in-out infinite; }
+  .dot.ok { background: var(--ok); }
+  .dot.wait { background: var(--warn); }
+  .dot.pending { background: var(--ink-soft); }
+  .dot.running { background: var(--cobalt); animation: pulse 1.4s ease-in-out infinite; }
+  .dot.completed { background: var(--ok); }
+  .dot.error { background: var(--danger); }
+  @keyframes pulse { 50% { opacity: 0.35; } }
+  #side-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-soft);
+    font-size: 12px;
+    padding-top: 10px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    min-height: 40px;
+  }
+  .text-btn, .ghost, #send, #stop, #settings-btn, #library-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 6px 8px;
+  }
+  .text-btn, #settings-btn, #library-btn, #menu, #hide-sessions { color: var(--ink-soft); }
+  .text-btn { padding-left: 2px; }
+  .text-btn:hover, #settings-btn:hover, #library-btn:hover, #menu:hover, #hide-sessions:hover {
+    color: var(--ink);
+    background: var(--fill);
+  }
+  .ghost { border-color: var(--line); background: transparent; color: var(--ink-soft); }
+  .ghost:hover { color: var(--ink); background: var(--fill); }
+  .ghost.danger { color: var(--danger); }
+  #main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--paper);
+  }
+  #top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: calc(12px + env(safe-area-inset-top));
+    padding-bottom: 4px;
+  }
+  #top label { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; color: var(--ink-soft); font-size: 12px; }
+  #project { max-width: 260px; }
+  #menu { display: none; }
+  button.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-soft);
+  }
+  button.icon-btn:hover { color: var(--ink); background: var(--fill); }
+  button.icon-btn svg { display: block; }
+  #session-bar {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    width: min(760px, calc(100% - 40px));
+    margin: 8px auto 0;
+    padding: 8px 0 0;
+  }
+  #session-bar > div:first-child { min-width: 0; flex: 1; }
+  #new-session { text-align: left; align-self: flex-start; }
+  #session-bar h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+  .path { margin: 2px 0 0; color: var(--ink-soft); font-size: 12px; }
+  .bar-actions { display: flex; gap: 6px; flex: none; }
+  #banner {
+    width: min(760px, calc(100% - 40px));
+    margin: 12px auto 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border-left: 2px solid var(--warn);
+    background: color-mix(in srgb, var(--warn) 10%, var(--paper));
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+  }
+  #banner[hidden] { display: none; }
+  #stream {
+    flex: 1;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 12px 20px 28px;
+  }
+  #stream:has(.empty-main) { display: flex; }
+  .thread { max-width: 760px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+  .empty-main { color: var(--ink-soft); margin: auto; text-align: center; }
+  .empty-main p { margin: 0; }
+  .msg-user .user-body {
+    background: var(--user);
+    border-left: 2px solid color-mix(in srgb, var(--cobalt) 55%, var(--line));
+    border-radius: 0 12px 12px 0;
+    padding: 12px 16px;
+  }
+  .kicker { margin: 0 0 4px; font-size: 11px; color: var(--ink-soft); }
+  .md > :first-child { margin-top: 0; }
+  .md > :last-child { margin-bottom: 0; }
+  .md p, .md ul, .md ol, .md blockquote, .md pre, .md table { margin: 0.6em 0; }
+  .md h1, .md h2, .md h3, .md h4, .md h5, .md h6 { margin: 0.8em 0 0.3em; line-height: 1.3; letter-spacing: -0.02em; }
+  .md h1 { font-size: 1.35rem; } .md h2 { font-size: 1.2rem; } .md h3 { font-size: 1.05rem; }
+  .md ul, .md ol { padding-left: 1.3em; }
+  .md blockquote { margin-left: 0; padding-left: 12px; border-left: 2px solid var(--line); color: var(--ink-soft); }
+  .md a { color: var(--cobalt-ink); }
+  .md code { font-size: 0.88em; background: color-mix(in srgb, var(--ink) 6%, transparent); padding: 0 0.25em; border-radius: 3px; }
+  .codeblock { margin: 0.7em 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .codehead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 32px;
+    padding: 0 4px 0 10px;
+    background: var(--fog);
+    color: var(--ink-soft);
+    font-size: 11px;
+  }
+  .codehead .icon-btn { width: 28px; height: 28px; }
+  .codehead .copied .copy-glyph { display: none; }
+  .codehead .ok-glyph { display: none; }
+  .codehead .copied .ok-glyph { display: block; color: var(--ok); }
+  .md pre, .tool pre {
+    margin: 0;
+    padding: 10px 12px;
+    overflow: auto;
+    background: var(--fog);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .md table { border-collapse: collapse; font-size: 13px; display: block; overflow: auto; }
+  .md th, .md td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; vertical-align: top; }
+  .md th { background: var(--fog); font-weight: 600; }
+  .tool, .reason, .note {
+    margin: 6px 0;
+    border-left: 1px solid var(--line);
+    padding: 2px 0 2px 12px;
+  }
+  .tool summary, .reason summary {
+    cursor: pointer;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    min-width: 0;
+  }
+  .tool-name { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12.5px; }
+  .tool-sum { color: var(--ink-soft); font-size: 13px; min-width: 0; }
+  .tool pre { max-height: 280px; margin-top: 6px; }
+  .tool pre.is-error { color: var(--danger); }
+  .reason .md { color: var(--ink-soft); font-size: 13.5px; padding-top: 4px; }
+  .note { color: var(--ink-soft); font-size: 13px; }
+  .msg-foot { margin-top: 6px; color: var(--ink-soft); font-size: 12px; }
+  .msg-error { margin-top: 8px; border-left: 3px solid var(--danger); padding: 4px 10px; color: var(--danger); }
+  #jump { align-self: center; margin: 0 0 6px; }
+  #jump[hidden] { display: none; }
+  #prompts { width: min(760px, calc(100% - 40px)); margin: 0 auto; padding: 0; }
+  .card {
+    border-left: 2px solid var(--cobalt);
+    border-radius: 0 12px 12px 0;
+    background: color-mix(in srgb, var(--cobalt) 8%, var(--paper));
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .card h3 { margin: 0 0 4px; font-size: 14px; }
+  .card p { margin: 0 0 8px; }
+  .card .patterns { white-space: pre-wrap; color: var(--ink-soft); font-size: 12.5px; margin: 0 0 8px; }
+  .card-actions, .queue-item, .composer-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  #composer {
+    width: min(792px, calc(100% - 32px));
+    margin: 0 auto calc(12px + env(safe-area-inset-bottom));
+    padding: 8px 8px 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--fog);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  #composer:has(#input:disabled) { opacity: 0.7; }
+  #queue:empty { display: none; }
+  .queue-item { color: var(--ink-soft); font-size: 13px; }
+  #input {
+    width: 100%;
+    resize: none;
+    min-height: 44px;
+    max-height: 200px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 6px 4px 2px;
+  }
+  #agent, #model { width: auto; max-width: 100%; background: transparent; }
+  #model { flex: 1; min-width: 160px; }
+  #send {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: transparent;
+    padding: 7px 14px;
+    font-weight: 500;
+  }
+  #send:hover { background: color-mix(in srgb, var(--ink) 88%, var(--paper)); }
+  #stop { border-color: var(--danger); color: var(--danger); }
+  #send:disabled, #input:disabled, #stop:disabled { opacity: 0.45; cursor: default; }
+  dialog {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 14px;
+    padding: 20px;
+    width: min(440px, calc(100vw - 28px));
+    box-shadow: 0 16px 50px var(--shadow);
+  }
+  dialog::backdrop { background: rgba(16, 20, 24, 0.45); }
+  dialog h2 { margin: 0 0 8px; font-size: 18px; }
+  dialog p { margin: 0 0 12px; color: var(--ink-soft); font-size: 14px; }
+  dialog label { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; font-size: 13px; color: var(--ink-soft); }
+  dialog .composer-row { justify-content: flex-end; }
+  #library-dialog {
+    width: min(560px, calc(100vw - 28px));
+    max-height: min(860px, calc(100dvh - 28px));
+    overflow: auto;
+  }
+  .seg { display: flex; gap: 4px; margin: 0 0 12px; }
+  .seg button[aria-selected="true"] { color: var(--ink); background: var(--fill); }
+  .lib-list {
+    max-height: 132px;
+    overflow: auto;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin: 0 0 12px;
+    padding: 4px;
+  }
+  .lib-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 5px 6px;
+    font-size: 13px;
+  }
+  .lib-row span:last-child {
+    color: var(--ink-soft);
+    font-size: 12px;
+    text-align: right;
+  }
+  .hint { margin: -4px 0 10px; color: var(--ink-soft); font-size: 12px; line-height: 1.4; }
+  .hint.warn { color: var(--danger); }
+  #lib-body { min-height: 132px; resize: vertical; }
+  #lib-result .codeblock { margin-top: 8px; }
+  #lib-save { background: var(--ink); color: var(--paper); border-color: transparent; padding: 7px 14px; font-weight: 500; }
+  #lib-save:disabled { opacity: 0.45; cursor: default; }
+  .q-block { margin-bottom: 8px; }
+  .q-block strong { display: block; font-size: 14px; }
+  @media (min-width: 761px) {
+    #sidebar {
+      width: 312px;
+      min-width: 312px;
+      transition: margin-left 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    #app.sidebar-collapsed #sidebar { margin-left: -312px; }
+    #app.sidebar-collapsed #menu { display: inline-flex; }
+  }
+  @media (max-width: 760px) {
+    #menu { display: inline-flex; }
+    #app.sidebar-collapsed #sidebar,
+    #sidebar {
+      position: fixed;
+      z-index: 20;
+      inset: 0 auto 0 0;
+      width: min(88vw, 360px);
+      min-width: 0;
+      margin-left: 0;
+      transform: translateX(-105%);
+      transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+      box-shadow: none;
+    }
+    #sidebar.open,
+    #app.sidebar-collapsed #sidebar.open { transform: none; box-shadow: 12px 0 40px var(--shadow); }
+    #scrim.show { display: block; position: fixed; inset: 0; background: rgba(16, 20, 24, 0.42); z-index: 15; }
+    #project { max-width: none; }
+    input, select, textarea { font-size: 16px; }
+    #stream { padding-left: 14px; padding-right: 14px; }
+    #session-bar, #prompts, #banner { width: min(760px, calc(100% - 28px)); }
+    #composer { width: min(792px, calc(100% - 20px)); border-radius: 14px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="scrim"></div>
+  <aside id="sidebar">
+    <div class="side-head">
+      <div class="brand">
+        <strong>Openview</strong>
+        <button id="hide-sessions" class="icon-btn" type="button" aria-label="Hide sessions" aria-controls="sidebar" aria-expanded="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <rect x="3.5" y="4.5" width="17" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.75"/>
+            <path d="M9 4.5v15" fill="none" stroke="currentColor" stroke-width="1.75"/>
+          </svg>
+        </button>
+      </div>
+      <input id="search" type="search" placeholder="Search sessions" autocomplete="off" aria-label="Search sessions">
+      <button id="new-session" class="text-btn" type="button">New session</button>
+    </div>
+    <div id="session-list"></div>
+    <footer id="side-foot" role="status"></footer>
+  </aside>
+  <main id="main">
+    <header id="top">
+      <button id="menu" class="icon-btn" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="Show sessions">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <rect x="3.5" y="4.5" width="17" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.75"/>
+          <path d="M9 4.5v15" fill="none" stroke="currentColor" stroke-width="1.75"/>
+        </svg>
+      </button>
+      <label>Project
+        <select id="project" aria-label="Project"></select>
+      </label>
+      <button id="library-btn" type="button">Library</button>
+      <button id="settings-btn" type="button">Settings</button>
+    </header>
+    <div id="session-bar">
+      <div>
+        <h1 id="title">Openview</h1>
+        <p id="path" class="path mono"></p>
+      </div>
+      <div class="bar-actions">
+        <button id="rename" class="ghost" type="button" hidden>Rename</button>
+        <button id="delete" class="ghost danger" type="button" hidden>Delete</button>
+      </div>
+    </div>
+    <div id="banner" hidden role="status"></div>
+    <div id="stream"></div>
+    <button id="jump" class="ghost" type="button" hidden>Jump to latest</button>
+    <div id="prompts"></div>
+    <form id="composer">
+      <div id="queue"></div>
+      <textarea id="input" rows="1" placeholder="Message" aria-label="Message"></textarea>
+      <div class="composer-row">
+        <select id="agent" aria-label="Agent"></select>
+        <select id="model" aria-label="Model"></select>
+        <button id="stop" type="button" hidden>Stop</button>
+        <button id="send" type="submit">Send</button>
+      </div>
+    </form>
+  </main>
+</div>
+
+<dialog id="settings-dialog">
+  <form method="dialog">
+    <h2>Connection</h2>
+    <p>Leave the server URL empty to use this proxy. A URL is only for talking to OpenCode directly from the browser, which also needs <span class="mono">opencode serve --cors</span>.</p>
+    <label>Server URL<input id="set-url" type="url" placeholder="http://127.0.0.1:4096" autocomplete="off"></label>
+    <label>Username<input id="set-user" autocomplete="username"></label>
+    <label>Password<input id="set-pass" type="password" autocomplete="current-password"></label>
+    <div class="composer-row">
+      <button class="ghost" type="submit" value="cancel">Cancel</button>
+      <button id="set-save" type="submit" value="save">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="library-dialog">
+  <form id="library-form">
+    <h2>Agents and skills</h2>
+    <p id="lib-lead"></p>
+    <div class="seg" role="tablist" aria-label="What to add">
+      <button id="lib-tab-agent" type="button" role="tab" aria-selected="true">Agent</button>
+      <button id="lib-tab-skill" type="button" role="tab" aria-selected="false">Skill</button>
+    </div>
+    <div id="lib-list" class="lib-list" role="list"></div>
+    <label>Where
+      <select id="lib-scope" class="field">
+        <option value="project">This project</option>
+        <option value="global">Every project</option>
+      </select>
+    </label>
+    <label id="lib-project-wrap">Project
+      <select id="lib-project" class="field"></select>
+    </label>
+    <label>Name
+      <input id="lib-name" class="field" autocomplete="off" spellcheck="false" placeholder="review-notes">
+    </label>
+    <p class="hint" id="lib-path"></p>
+    <label>Description
+      <input id="lib-desc" class="field" autocomplete="off" placeholder="What it does, and when to use it">
+    </label>
+    <label id="lib-mode-wrap">Mode
+      <select id="lib-mode" class="field">
+        <option value="primary">Primary — listed in the agent menu</option>
+        <option value="subagent">Subagent — used by another agent</option>
+      </select>
+    </label>
+    <label>Instructions
+      <textarea id="lib-body" class="field" rows="7" spellcheck="true" placeholder="The steps to follow."></textarea>
+    </label>
+    <div id="lib-result" hidden></div>
+    <div class="composer-row">
+      <button id="lib-close" class="ghost" type="button">Close</button>
+      <button id="lib-save" type="submit">Save file</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="project-dialog">
+  <form method="dialog">
+    <h2>New session</h2>
+    <p>Choose which project this session belongs to.</p>
+    <label>Project<select id="new-project"></select></label>
+    <div class="composer-row">
+      <button class="ghost" type="submit" value="cancel">Cancel</button>
+      <button type="submit" value="ok">Create</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+"use strict"
+
+const BUCKETS = ["Today", "Yesterday", "This week", "Older"]
+const state = {
+  projects: [],
+  sessions: new Map(),
+  status: new Map(),
+  permissions: [],
+  questions: [],
+  messages: [],
+  queue: [],
+  activeId: null,
+  projectFilter: "all",
+  query: "",
+  settings: { url: "", username: "", password: "" },
+  agent: "",
+  model: "",
+  agents: [],
+  models: [],
+  pickerDir: null,
+  apiAvailable: false,
+  dbAvailable: false,
+  conn: "connecting",
+  offline: false,
+  unavailable: false,
+  loadingMessages: false,
+  stick: true,
+  loadGen: 0,
+  ignoreHash: false,
+  detailsOpen: new Map(),
+  bannerKind: "",
+  libraryKind: "agent",
+  libraryAgents: [],
+  librarySkills: [],
+}
+
+const $ = (id) => document.getElementById(id)
+
+function el(tag, className, text) {
+  const node = document.createElement(tag)
+  if (className) node.className = className
+  if (text != null && text !== false) node.textContent = text
+  return node
+}
+
+function option(value, label) {
+  const node = el("option", null, label)
+  node.value = value
+  return node
+}
+
+function basicAuth(user, pass) {
+  const bytes = new TextEncoder().encode(`${user}:${pass}`)
+  let binary = ""
+  for (const byte of bytes) binary += String.fromCharCode(byte)
+  return `Basic ${btoa(binary)}`
+}
+
+function withDir(path, directory) {
+  const url = new URL(path, "http://local.invalid")
+  if (directory) url.searchParams.set("directory", directory)
+  return url.pathname + url.search
+}
+
+function errorText(err) {
+  if (!err) return ""
+  if (typeof err === "string") return err
+  if (typeof err.data?.message === "string") return err.data.message
+  if (typeof err.message === "string" && err.name) return `${err.name}: ${err.message}`
+  if (typeof err.message === "string") return err.message
+  try { return JSON.stringify(err) } catch { return "Request failed" }
+}
+
+function showBanner(text, kind = "info") {
+  state.bannerKind = kind
+  const banner = $("banner")
+  const shown = String(text || "")
+  const clipped = shown.length > 500 ? `${shown.slice(0, 500)}…` : shown
+  banner.hidden = false
+  banner.replaceChildren(el("span", null, clipped))
+  const dismiss = el("button", "text-btn", "Dismiss")
+  dismiss.type = "button"
+  dismiss.addEventListener("click", clearBanner)
+  banner.append(dismiss)
+}
+
+function clearBanner() {
+  state.bannerKind = ""
+  const banner = $("banner")
+  banner.hidden = true
+  banner.replaceChildren()
+}
+
+async function apiFetch(path, opts = {}) {
+  const base = state.settings.url.replace(/\/$/, "")
+  const url = /^https?:\/\//.test(path) ? path : base + path
+  const headers = new Headers(opts.headers || {})
+  if (state.settings.url && (state.settings.username || state.settings.password)) {
+    headers.set("authorization", basicAuth(state.settings.username, state.settings.password))
+  }
+  const hasBody = opts.body !== undefined
+  if (hasBody && !headers.has("content-type")) headers.set("content-type", "application/json")
+  let res
+  try {
+    res = await fetch(url, {
+      method: opts.method || "GET",
+      headers,
+      body: hasBody ? JSON.stringify(opts.body) : undefined,
+      signal: opts.signal,
+      credentials: "same-origin",
+    })
+  } catch (err) {
+    if (err.name === "AbortError") throw err
+    state.offline = true
+    state.conn = "offline"
+    showBanner("Can't reach the server", "offline")
+    renderFooter()
+    const wrapped = new Error("Can't reach the server")
+    wrapped.offline = true
+    throw wrapped
+  }
+  if (state.offline) {
+    state.offline = false
+    if (state.bannerKind === "offline") clearBanner()
+    if (state.conn === "offline") state.conn = "live"
+    renderFooter()
+  }
+  if (res.status === 401) {
+    showBanner("The server refused these credentials.", "auth")
+    openSettings()
+    const err = new Error("Unauthorized")
+    err.status = 401
+    throw err
+  }
+  return res
+}
+
+async function request(method, path, directory, body) {
+  const res = await apiFetch(withDir(path, directory), { method, body })
+  if (res.status === 204) return null
+  const text = await res.text()
+  let data = null
+  if (text) {
+    try { data = JSON.parse(text) } catch { data = text }
+  }
+  if (!res.ok) {
+    const err = new Error(typeof data === "string" && data ? data : errorText(data) || `${res.status}`)
+    err.status = res.status
+    err.data = data
+    throw err
+  }
+  return data
+}
+
+function getJSON(path, directory) {
+  return request("GET", path, directory)
+}
+
+function loadLocal() {
+  try {
+    const raw = JSON.parse(localStorage.getItem("oc-ui-settings") || "{}")
+    state.settings = {
+      url: typeof raw.url === "string" ? raw.url : "",
+      username: typeof raw.username === "string" ? raw.username : "",
+      password: typeof raw.password === "string" ? raw.password : "",
+    }
+  } catch {
+    state.settings = { url: "", username: "", password: "" }
+  }
+  state.agent = localStorage.getItem("oc-ui-agent") || ""
+  state.model = localStorage.getItem("oc-ui-model") || ""
+  if (localStorage.getItem("oc-ui-sidebar") === "closed") $("app").classList.add("sidebar-collapsed")
+}
+
+function projectLabel(dir) {
+  const parts = String(dir || "").replace(/\/+$/, "").split("/").filter(Boolean)
+  if (!parts.length) return "Unknown project"
+  return parts.slice(-2).join("/")
+}
+
+function projectOptions() {
+  const map = new Map()
+  for (const project of state.projects) {
+    if (!project.worktree || project.worktree === "/") continue
+    map.set(project.id, {
+      id: project.id,
+      worktree: project.worktree,
+      label: projectLabel(project.worktree),
+    })
+  }
+  for (const session of state.sessions.values()) {
+    if (!session.directory || session.directory === "/") continue
+    const known = [...map.values()].some((project) => project.id === session.projectID || project.worktree === session.directory)
+    if (known) continue
+    const id = session.projectID || session.directory
+    if (!map.has(id)) map.set(id, { id, worktree: session.directory, label: projectLabel(session.directory) })
+  }
+  return [...map.values()].sort((a, b) => a.label.localeCompare(b.label))
+}
+
+function selectedProject() {
+  if (state.projectFilter === "all") return null
+  return projectOptions().find((project) => project.id === state.projectFilter) || null
+}
+
+function currentSession() {
+  return state.activeId ? state.sessions.get(state.activeId) || null : null
+}
+
+function normalizeApi(session) {
+  return {
+    id: session.id,
+    title: session.title || "Untitled",
+    directory: session.directory || "",
+    projectID: session.projectID,
+    parentID: session.parentID || undefined,
+    time: session.time || { created: 0, updated: 0 },
+    fromApi: true,
+  }
+}
+
+function mergeDb(map, row) {
+  if (!row?.id) return
+  const existing = map.get(row.id)
+  if (existing?.fromApi) {
+    existing.fromDb = true
+    return
+  }
+  map.set(row.id, {
+    id: row.id,
+    title: row.title || existing?.title || "Untitled",
+    directory: row.directory || existing?.directory || "",
+    projectID: row.projectId || existing?.projectID,
+    parentID: row.parentId || undefined,
+    time: {
+      created: row.time?.created || existing?.time?.created || 0,
+      updated: row.time?.updated || existing?.time?.updated || 0,
+      archived: row.archived || existing?.time?.archived,
+    },
+    fromDb: true,
+    fromApi: false,
+  })
+}
+
+function applySessionInfo(info) {
+  if (!info?.id) return
+  const prev = state.sessions.get(info.id) || {}
+  const next = normalizeApi(info)
+  if (!next.directory && prev.directory) next.directory = prev.directory
+  next.fromDb = Boolean(prev.fromDb)
+  next.unavailable = false
+  state.sessions.set(info.id, next)
+  scheduleSidebar()
+  if (info.id === state.activeId) renderHeader()
+}
+
+function isBusy(id) {
+  const status = state.status.get(id)
+  return Boolean(status && status.type && status.type !== "idle")
+}
+
+function bucketOf(ts) {
+  if (!ts) return "Older"
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  if (ts >= start) return "Today"
+  if (ts >= start - 86400000) return "Yesterday"
+  const monday = start - ((now.getDay() + 6) % 7) * 86400000
+  if (ts >= monday) return "This week"
+  return "Older"
+}
+
+function relTime(ts) {
+  if (!ts) return ""
+  const seconds = Math.round((Date.now() - ts) / 1000)
+  if (Math.abs(seconds) < 15) return "just now"
+  if (seconds < 60) return `${seconds}s`
+  const minutes = Math.round(seconds / 60)
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) return `${hours}h`
+  const days = Math.round(hours / 24)
+  if (days < 7) return `${days}d`
+  return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+}
+
+function visibleSessions() {
+  const query = state.query.trim().toLowerCase()
+  const project = selectedProject()
+  const list = []
+  for (const session of state.sessions.values()) {
+    if (session.parentID) continue
+    if (session.time?.archived) continue
+    if (project && session.projectID !== project.id && session.directory !== project.worktree) continue
+    if (query) {
+      const hay = `${session.title || ""} ${session.directory || ""}`.toLowerCase()
+      if (!hay.includes(query)) continue
+    }
+    list.push(session)
+  }
+  list.sort((a, b) => (b.time?.updated || 0) - (a.time?.updated || 0))
+  return list
+}
+
+function sessionButton(session) {
+  const button = el("button", "session" + (session.id === state.activeId ? " active" : ""))
+  button.type = "button"
+  button.dataset.id = session.id
+  const dot = el("i", isBusy(session.id) ? "dot busy" : "dot")
+  dot.setAttribute("aria-hidden", "true")
+  button.append(dot)
+  const text = el("span", "session-text")
+  text.append(el("span", "session-title", session.title || "Untitled"))
+  if (state.permissions.some((item) => item.sessionID === session.id)) {
+    text.append(el("span", "needs", " permission"))
+  }
+  button.append(text)
+  const time = el("time", "session-time", relTime(session.time?.updated))
+  if (session.time?.updated) time.dateTime = new Date(session.time.updated).toISOString()
+  time.title = session.directory || ""
+  button.append(time)
+  button.addEventListener("click", () => {
+    closeDrawer()
+    openSession(session.id)
+  })
+  return button
+}
+
+function appendBuckets(parent, sessions) {
+  const buckets = new Map(BUCKETS.map((name) => [name, []]))
+  for (const session of sessions) buckets.get(bucketOf(session.time?.updated)).push(session)
+  for (const name of BUCKETS) {
+    const items = buckets.get(name)
+    if (!items.length) continue
+    const block = el("div", "bucket")
+    block.append(el("h3", null, name))
+    for (const session of items) block.append(sessionButton(session))
+    parent.append(block)
+  }
+}
+
+let sideFrame = 0
+function scheduleSidebar() {
+  if (sideFrame) return
+  sideFrame = requestAnimationFrame(() => {
+    sideFrame = 0
+    renderSidebar()
+    renderHeader()
+    renderFooter()
+  })
+}
+
+function renderSidebar() {
+  const list = $("session-list")
+  const top = list.scrollTop
+  const frag = document.createDocumentFragment()
+  const sessions = visibleSessions()
+  if (!sessions.length) {
+    frag.append(el("p", "empty", state.query ? "No matching sessions" : "No sessions"))
+  } else if (state.projectFilter === "all") {
+    const groups = new Map()
+    for (const session of sessions) {
+      const label = projectLabel(session.directory)
+      if (!groups.has(label)) groups.set(label, { label, sessions: [], newest: 0, directory: session.directory })
+      const group = groups.get(label)
+      group.sessions.push(session)
+      group.newest = Math.max(group.newest, session.time?.updated || 0)
+    }
+    const ordered = [...groups.values()].sort((a, b) => b.newest - a.newest)
+    for (const group of ordered) {
+      const section = el("section", "group")
+      const heading = el("h2", null, group.label)
+      heading.title = group.directory || group.label
+      section.append(heading)
+      appendBuckets(section, group.sessions)
+      frag.append(section)
+    }
+  } else {
+    const section = el("section", "group")
+    appendBuckets(section, sessions)
+    frag.append(section)
+  }
+  list.replaceChildren(frag)
+  list.scrollTop = top
+  renderFooter()
+}
+
+function sessionCount() {
+  const project = selectedProject()
+  let count = 0
+  for (const session of state.sessions.values()) {
+    if (session.parentID || session.time?.archived) continue
+    if (project && session.projectID !== project.id && session.directory !== project.worktree) continue
+    count += 1
+  }
+  return count
+}
+
+function renderFooter() {
+  const foot = $("side-foot")
+  const sources = []
+  if (state.apiAvailable) sources.push("API")
+  if (state.dbAvailable) sources.push("DB")
+  const conn = state.conn === "live" ? "live" : state.conn === "offline" ? "offline" : state.conn === "reconnecting" ? "reconnecting" : "connecting"
+  foot.replaceChildren(
+    el("i", "dot " + (state.conn === "live" ? "ok" : "wait")),
+    el("span", null, `${sessionCount()} sessions · ${sources.join(" + ") || "—"} · ${conn}`),
+  )
+}
+
+function renderProjectSelect() {
+  const select = $("project")
+  const options = projectOptions()
+  const signature = ["all", ...options.map((project) => `${project.id}:${project.label}`)].join("|")
+  if (select.dataset.signature !== signature) {
+    select.replaceChildren(option("all", "All projects"))
+    for (const project of options) {
+      const node = option(project.id, project.label)
+      node.title = project.worktree
+      select.append(node)
+    }
+    select.dataset.signature = signature
+  }
+  const wanted = [...select.options].some((item) => item.value === state.projectFilter) ? state.projectFilter : "all"
+  state.projectFilter = wanted
+  select.value = wanted
+}
+
+function renderHeader() {
+  const session = currentSession()
+  const title = $("title")
+  if (title.querySelector("input")) return
+  title.textContent = session ? (session.title || "Untitled") : "Openview"
+  $("session-bar").hidden = !session
+  $("composer").hidden = !session
+  const path = $("path")
+  path.textContent = session?.directory || ""
+  path.title = session?.directory || ""
+  const busy = session && isBusy(session.id)
+  if (busy) path.textContent = (session.directory ? session.directory + " · " : "") + "working"
+  $("rename").hidden = !session
+  $("delete").hidden = !session
+  renderComposer()
+}
+
+function renderPickers() {
+  const agent = $("agent")
+  const model = $("model")
+  agent.replaceChildren(option("", "Default agent"))
+  for (const item of state.agents) agent.append(option(item.name, item.name))
+  if (state.agent && ![...agent.options].some((item) => item.value === state.agent)) agent.append(option(state.agent, state.agent))
+  agent.value = state.agent
+  model.replaceChildren(option("", "Default model"))
+  for (const item of state.models) {
+    model.append(option(`${item.providerID}\u001f${item.modelID}`, `${item.providerName} / ${item.name}`))
+  }
+  if (state.model && ![...model.options].some((item) => item.value === state.model)) {
+    model.append(option(state.model, state.model.replace("\u001f", " / ")))
+  }
+  model.value = state.model
+}
+
+function pickerDirectory() {
+  return currentSession()?.directory || selectedProject()?.worktree || state.projects[0]?.worktree || ""
+}
+
+async function loadPickers(directory) {
+  const dir = directory || pickerDirectory()
+  if (dir && dir === state.pickerDir && (state.agents.length || state.models.length)) return
+  state.pickerDir = dir || null
+  try {
+    const agents = await getJSON("/agent", dir || undefined)
+    if (Array.isArray(agents)) {
+      state.agents = agents.filter((agent) => agent && agent.hidden !== true && agent.mode !== "subagent" && agent.name)
+    }
+  } catch { /* optional */ }
+  try {
+    const config = await getJSON("/config/providers", dir || undefined)
+    const models = []
+    for (const provider of config?.providers || []) {
+      for (const model of Object.values(provider.models || {})) {
+        if (!model?.id) continue
+        models.push({
+          providerID: model.providerID || provider.id,
+          modelID: model.id,
+          name: model.name || model.id,
+          providerName: provider.name || provider.id,
+        })
+      }
+    }
+    models.sort((a, b) => `${a.providerName} ${a.name}`.localeCompare(`${b.providerName} ${b.name}`))
+    state.models = models
+  } catch { /* optional */ }
+  renderPickers()
+}
+
+async function loadStatuses() {
+  const dirs = new Set()
+  for (const project of state.projects) if (project.worktree && project.worktree !== "/") dirs.add(project.worktree)
+  const active = currentSession()
+  if (active?.directory && active.directory !== "/") dirs.add(active.directory)
+  const targets = dirs.size ? [...dirs] : [undefined]
+  const results = await Promise.allSettled(targets.map((dir) => getJSON("/session/status", dir)))
+  const status = new Map()
+  for (const result of results) {
+    if (result.status !== "fulfilled" || !result.value || typeof result.value !== "object" || Array.isArray(result.value)) continue
+    for (const [id, value] of Object.entries(result.value)) status.set(id, value)
+  }
+  state.status = status
+}
+
+async function refreshSessions() {
+  const next = new Map()
+  let api = false
+  let projects = []
+  try {
+    const listed = await getJSON("/project")
+    if (Array.isArray(listed)) projects = listed.filter((project) => project && project.worktree && project.worktree !== "/")
+  } catch (err) {
+    if (err.offline || err.status === 401) renderFooter()
+  }
+  state.projects = projects
+  if (projects.length) {
+    const results = await Promise.allSettled(projects.map((project) => getJSON("/session", project.worktree)))
+    for (const result of results) {
+      if (result.status !== "fulfilled" || !Array.isArray(result.value)) continue
+      api = true
+      for (const session of result.value) {
+        if (session?.id) next.set(session.id, normalizeApi(session))
+      }
+    }
+  }
+  if (!api) {
+    try {
+      const listed = await getJSON("/session")
+      if (Array.isArray(listed)) {
+        api = true
+        for (const session of listed) if (session?.id) next.set(session.id, normalizeApi(session))
+      }
+    } catch { /* optional when /project is missing */ }
+  }
+  let db = false
+  try {
+    const rows = await getJSON("/_db/sessions?limit=10000")
+    if (Array.isArray(rows)) {
+      db = true
+      for (const row of rows) mergeDb(next, row)
+    }
+  } catch { /* 404/501: stay on the API list */ }
+  if (state.activeId && !next.has(state.activeId) && state.sessions.has(state.activeId)) {
+    next.set(state.activeId, state.sessions.get(state.activeId))
+  }
+  state.sessions = next
+  state.apiAvailable = api
+  state.dbAvailable = db
+  try { await loadStatuses() } catch { /* status is optional */ }
+  renderProjectSelect()
+  renderSidebar()
+  renderHeader()
+}
+
+async function searchDb(query) {
+  if (!query) return
+  try {
+    const rows = await getJSON(`/_db/sessions?limit=200&q=${encodeURIComponent(query)}`)
+    if (!Array.isArray(rows)) return
+    state.dbAvailable = true
+    let added = false
+    for (const row of rows) {
+      if (!state.sessions.has(row.id)) {
+        mergeDb(state.sessions, row)
+        added = true
+      }
+    }
+    if (added) renderSidebar()
+  } catch { /* database listing is optional */ }
+}
+
+function patternText(value) {
+  if (!value) return ""
+  if (typeof value === "string") return value
+  if (Array.isArray(value)) {
+    return value.map((item) => typeof item === "string" ? item : (item?.pattern || item?.path || item?.title || JSON.stringify(item))).join("\n")
+  }
+  return JSON.stringify(value)
+}
+
+function normalizePermission(raw) {
+  if (!raw) return null
+  const id = raw.id || raw.requestID
+  if (!id) return null
+  return {
+    id,
+    sessionID: raw.sessionID,
+    permission: raw.permission || raw.action || "permission",
+    patterns: raw.patterns || raw.resources || [],
+    metadata: raw.metadata || {},
+  }
+}
+
+function upsertPermission(raw) {
+  const item = normalizePermission(raw)
+  if (!item) return
+  const index = state.permissions.findIndex((entry) => entry.id === item.id)
+  if (index === -1) state.permissions.push(item)
+  else state.permissions[index] = { ...state.permissions[index], ...item }
+  renderPrompts()
+  scheduleSidebar()
+}
+
+function removePermission(id) {
+  if (!id) return
+  state.permissions = state.permissions.filter((item) => item.id !== id)
+  renderPrompts()
+  scheduleSidebar()
+}
+
+async function loadPermissions() {
+  const dirs = []
+  for (const project of state.projects) dirs.push(project.worktree)
+  const pull = async (dir) => {
+    try {
+      const list = await getJSON("/permission", dir)
+      return Array.isArray(list) ? list : []
+    } catch {
+      return []
+    }
+  }
+  const batches = await Promise.all([pull(undefined), ...dirs.map((dir) => pull(dir))])
+  const map = new Map()
+  for (const batch of batches) {
+    for (const item of batch) {
+      const normalized = normalizePermission(item)
+      if (normalized) map.set(normalized.id, normalized)
+    }
+  }
+  state.permissions = [...map.values()]
+  renderPrompts()
+}
+
+async function loadQuestions() {
+  try {
+    const list = await getJSON("/question")
+    state.questions = Array.isArray(list) ? list.filter((item) => item?.id) : []
+  } catch {
+    /* optional */
+  }
+  renderPrompts()
+}
+
+function renderPrompts() {
+  const root = $("prompts")
+  root.replaceChildren()
+  const sessionId = state.activeId
+  for (const item of state.permissions) {
+    if (sessionId && item.sessionID && item.sessionID !== sessionId) continue
+    const card = el("div", "card")
+    card.append(el("h3", null, item.permission || "Permission"))
+    const patterns = patternText(item.patterns)
+    if (patterns) card.append(el("p", "patterns mono", patterns))
+    const actions = el("div", "card-actions")
+    for (const [reply, label] of [["once", "Allow once"], ["always", "Always allow"], ["reject", "Reject"]]) {
+      const button = el("button", reply === "reject" ? "ghost danger" : "ghost", label)
+      button.type = "button"
+      button.addEventListener("click", () => replyPermission(item, reply))
+      actions.append(button)
+    }
+    card.append(actions)
+    root.append(card)
+  }
+  for (const item of state.questions) {
+    if (sessionId && item.sessionID && item.sessionID !== sessionId) continue
+    root.append(questionCard(item))
+  }
+}
+
+function questionCard(item) {
+  const card = el("div", "card")
+  card.append(el("h3", null, "Question"))
+  const questions = Array.isArray(item.questions) ? item.questions : []
+  const picks = questions.map(() => new Set())
+  questions.forEach((question, index) => {
+    const block = el("div", "q-block")
+    block.append(el("strong", null, question.header || question.question || "Question"))
+    if (question.question && question.question !== question.header) block.append(el("p", null, question.question))
+    const row = el("div", "card-actions")
+    for (const choice of question.options || []) {
+      const button = el("button", "ghost", choice.label)
+      button.type = "button"
+      button.title = choice.description || ""
+      button.addEventListener("click", () => {
+        if (question.multiple) {
+          if (picks[index].has(choice.label)) picks[index].delete(choice.label)
+          else picks[index].add(choice.label)
+          button.setAttribute("aria-pressed", picks[index].has(choice.label) ? "true" : "false")
+        } else {
+          picks[index].clear()
+          picks[index].add(choice.label)
+          for (const child of row.querySelectorAll("button")) child.setAttribute("aria-pressed", "false")
+          button.setAttribute("aria-pressed", "true")
+        }
+      })
+      row.append(button)
+    }
+    if (question.custom) {
+      const input = el("input", "q-custom")
+      input.placeholder = "Your own answer"
+      input.addEventListener("input", () => {
+        picks[index].custom = input.value
+      })
+      block.append(input)
+    }
+    block.append(row)
+    card.append(block)
+  })
+  const actions = el("div", "card-actions")
+  const send = el("button", "ghost", "Reply")
+  send.type = "button"
+  send.addEventListener("click", () => replyQuestion(item, questions, picks))
+  const dismiss = el("button", "ghost danger", "Dismiss")
+  dismiss.type = "button"
+  dismiss.addEventListener("click", () => rejectQuestion(item))
+  actions.append(send, dismiss)
+  card.append(actions)
+  return card
+}
+
+async function replyPermission(item, reply) {
+  const session = state.sessions.get(item.sessionID) || currentSession()
+  const directory = session?.directory
+  try {
+    await request("POST", `/permission/${encodeURIComponent(item.id)}/reply`, directory, { reply })
+    removePermission(item.id)
+  } catch (err) {
+    if (err.status === 404 || err.status === 405 || err.status === 400) {
+      try {
+        await request(
+          "POST",
+          `/session/${encodeURIComponent(item.sessionID)}/permissions/${encodeURIComponent(item.id)}`,
+          directory,
+          { response: reply },
+        )
+        removePermission(item.id)
+        return
+      } catch (fallback) {
+        showBanner(fallback.message || "Couldn't reply to the permission")
+        return
+      }
+    }
+    showBanner(err.message || "Couldn't reply to the permission")
+  }
+}
+
+async function replyQuestion(item, questions, picks) {
+  const session = state.sessions.get(item.sessionID) || currentSession()
+  const answers = questions.map((question, index) => {
+    const selected = [...picks[index]]
+    if (picks[index].custom) selected.push(picks[index].custom)
+    if (!selected.length && question.options?.[0]) selected.push(question.options[0].label)
+    return selected
+  })
+  try {
+    await request("POST", `/question/${encodeURIComponent(item.id)}/reply`, session?.directory, { answers })
+    state.questions = state.questions.filter((entry) => entry.id !== item.id)
+    renderPrompts()
+  } catch (err) {
+    showBanner(err.message || "Couldn't reply to the question")
+  }
+}
+
+async function rejectQuestion(item) {
+  const session = state.sessions.get(item.sessionID) || currentSession()
+  try {
+    await request("POST", `/question/${encodeURIComponent(item.id)}/reject`, session?.directory)
+    state.questions = state.questions.filter((entry) => entry.id !== item.id)
+    renderPrompts()
+  } catch (err) {
+    showBanner(err.message || "Couldn't dismiss the question")
+  }
+}
+
+function appendInline(parent, text) {
+  const source = String(text ?? "")
+  let index = 0
+  while (index < source.length) {
+    if (source[index] === "`") {
+      const end = source.indexOf("`", index + 1)
+      if (end > index) {
+        parent.append(el("code", null, source.slice(index + 1, end)))
+        index = end + 1
+        continue
+      }
+    }
+    if (source.startsWith("**", index)) {
+      const end = source.indexOf("**", index + 2)
+      if (end > index + 1) {
+        const strong = el("strong")
+        appendInline(strong, source.slice(index + 2, end))
+        parent.append(strong)
+        index = end + 2
+        continue
+      }
+    }
+    if (source[index] === "*" && source[index + 1] !== "*") {
+      const startOk = index === 0 || /\W/.test(source[index - 1])
+      const end = source.indexOf("*", index + 1)
+      const endOk = end > index + 1 && (end === source.length - 1 || /\W/.test(source[end + 1] || " "))
+      if (startOk && endOk) {
+        const em = el("em")
+        appendInline(em, source.slice(index + 1, end))
+        parent.append(em)
+        index = end + 1
+        continue
+      }
+    }
+    if (source[index] === "[") {
+      const close = source.indexOf("]", index + 1)
+      if (close > index && source[close + 1] === "(") {
+        const end = source.indexOf(")", close + 2)
+        if (end > close) {
+          const label = source.slice(index + 1, close)
+          const href = source.slice(close + 2, end).trim()
+          if (/^(https?:|mailto:)/i.test(href)) {
+            const link = el("a")
+            link.href = href
+            link.target = "_blank"
+            link.rel = "noreferrer noopener"
+            appendInline(link, label)
+            parent.append(link)
+          } else {
+            parent.append(document.createTextNode(source.slice(index, end + 1)))
+          }
+          index = end + 1
+          continue
+        }
+      }
+    }
+    let next = index + 1
+    while (next < source.length && source[next] !== "`" && source[next] !== "*" && source[next] !== "[") next++
+    parent.append(document.createTextNode(source.slice(index, next)))
+    index = next
+  }
+}
+
+function isTable(lines, index) {
+  if (!lines[index] || !lines[index].includes("|") || index + 1 >= lines.length) return false
+  return /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(lines[index + 1])
+}
+
+function splitRow(line) {
+  let text = line.trim()
+  if (text.startsWith("|")) text = text.slice(1)
+  if (text.endsWith("|")) text = text.slice(0, -1)
+  return text.split("|").map((cell) => cell.trim())
+}
+
+function renderTable(rows) {
+  const table = el("table")
+  const head = el("thead")
+  const headRow = el("tr")
+  for (const cell of splitRow(rows[0])) {
+    const th = el("th")
+    appendInline(th, cell)
+    headRow.append(th)
+  }
+  head.append(headRow)
+  table.append(head)
+  const body = el("tbody")
+  for (const line of rows.slice(2)) {
+    if (!line.trim()) continue
+    const tr = el("tr")
+    for (const cell of splitRow(line)) {
+      const td = el("td")
+      appendInline(td, cell)
+      tr.append(td)
+    }
+    body.append(tr)
+  }
+  table.append(body)
+  return table
+}
+
+function isBlockStart(lines, index) {
+  const line = lines[index]
+  if (!line || !line.trim()) return true
+  return line.startsWith("```")
+    || /^\s*#{1,6}\s+/.test(line)
+    || /^\s*>\s?/.test(line)
+    || /^\s*([-*+]|\d+\.)\s+/.test(line)
+    || isTable(lines, index)
+}
+
+function svgIcon() {
+  const node = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+  node.setAttribute("viewBox", "0 0 24 24")
+  node.setAttribute("width", "16")
+  node.setAttribute("height", "16")
+  node.setAttribute("aria-hidden", "true")
+  node.setAttribute("fill", "none")
+  node.setAttribute("stroke", "currentColor")
+  node.setAttribute("stroke-width", "1.75")
+  node.setAttribute("stroke-linecap", "round")
+  node.setAttribute("stroke-linejoin", "round")
+  return node
+}
+
+function copyButton(text) {
+  const button = el("button", "icon-btn")
+  button.type = "button"
+  button.setAttribute("aria-label", "Copy code")
+  const copy = svgIcon()
+  copy.classList.add("copy-glyph")
+  for (const box of [{ x: "8", y: "8" }, { x: "4.5", y: "4.5" }]) {
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+    rect.setAttribute("x", box.x)
+    rect.setAttribute("y", box.y)
+    rect.setAttribute("width", "11")
+    rect.setAttribute("height", "11")
+    rect.setAttribute("rx", "1.5")
+    copy.append(rect)
+  }
+  const check = svgIcon()
+  check.classList.add("ok-glyph")
+  const mark = document.createElementNS("http://www.w3.org/2000/svg", "path")
+  mark.setAttribute("d", "M6.5 12.5 10 16l7.5-8")
+  check.append(mark)
+  button.append(copy, check)
+  button.addEventListener("click", () => copyCode(text, button))
+  return button
+}
+
+function copyCode(text, button) {
+  const done = () => {
+    button.classList.add("copied")
+    button.setAttribute("aria-label", "Copied")
+    setTimeout(() => {
+      button.classList.remove("copied")
+      button.setAttribute("aria-label", "Copy code")
+    }, 1400)
+  }
+  const fallback = () => {
+    const area = el("textarea")
+    area.value = text
+    area.setAttribute("readonly", "")
+    area.style.position = "fixed"
+    area.style.left = "-9999px"
+    document.body.append(area)
+    area.select()
+    const ok = document.execCommand("copy")
+    area.remove()
+    if (ok) done()
+  }
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).then(done, fallback)
+    return
+  }
+  fallback()
+}
+
+function renderMarkdown(container, source) {
+  container.replaceChildren()
+  const lines = String(source ?? "").replace(/\r\n/g, "\n").split("\n")
+  let index = 0
+  while (index < lines.length) {
+    const line = lines[index]
+    if (line.startsWith("```")) {
+      const lang = line.slice(3).trim()
+      const body = []
+      index += 1
+      while (index < lines.length && !lines[index].startsWith("```")) {
+        body.push(lines[index])
+        index += 1
+      }
+      if (index < lines.length) index += 1
+      const text = body.join("\n")
+      const wrap = el("div", "codeblock")
+      const head = el("div", "codehead")
+      head.append(el("span", "mono", lang || ""))
+      head.append(copyButton(text))
+      wrap.append(head)
+      const pre = el("pre")
+      pre.append(el("code", null, text))
+      wrap.append(pre)
+      container.append(wrap)
+      continue
+    }
+    if (isTable(lines, index)) {
+      const rows = []
+      while (index < lines.length && lines[index].includes("|")) {
+        rows.push(lines[index])
+        index += 1
+      }
+      container.append(renderTable(rows))
+      continue
+    }
+    const heading = line.match(/^\s*(#{1,6})\s+(.*)$/)
+    if (heading) {
+      const node = el("h" + heading[1].length)
+      appendInline(node, heading[2])
+      container.append(node)
+      index += 1
+      continue
+    }
+    if (/^\s*>\s?/.test(line)) {
+      const body = []
+      while (index < lines.length && /^\s*>\s?/.test(lines[index])) {
+        body.push(lines[index].replace(/^\s*>\s?/, ""))
+        index += 1
+      }
+      const quote = el("blockquote")
+      renderMarkdown(quote, body.join("\n"))
+      container.append(quote)
+      continue
+    }
+    if (/^\s*([-*+]|\d+\.)\s+/.test(line)) {
+      const ordered = /^\s*\d+\.\s+/.test(line)
+      const list = el(ordered ? "ol" : "ul")
+      while (index < lines.length && /^\s*([-*+]|\d+\.)\s+/.test(lines[index])) {
+        const item = el("li")
+        appendInline(item, lines[index].replace(/^\s*([-*+]|\d+\.)\s+/, ""))
+        list.append(item)
+        index += 1
+      }
+      container.append(list)
+      continue
+    }
+    if (!line.trim()) {
+      index += 1
+      continue
+    }
+    const body = [line]
+    index += 1
+    while (index < lines.length && !isBlockStart(lines, index)) {
+      body.push(lines[index])
+      index += 1
+    }
+    const paragraph = el("p")
+    appendInline(paragraph, body.join(" "))
+    container.append(paragraph)
+  }
+}
+
+function toolSummary(part) {
+  const toolState = part.state || {}
+  const input = toolState.input || {}
+  const raw = toolState.title || input.command || input.filePath || input.path || input.pattern || input.query || input.url || input.description || ""
+  return String(raw).replace(/\s+/g, " ").trim()
+}
+
+function pretty(value) {
+  try { return JSON.stringify(value, null, 2) } catch { return String(value) }
+}
+
+function truncate(text, limit) {
+  const value = String(text ?? "")
+  if (value.length <= limit) return value
+  return `${value.slice(0, limit)}\n… (${value.length - limit} more characters)`
+}
+
+function captureDetails(node) {
+  if (!node) return
+  for (const details of node.querySelectorAll("details[data-part]")) {
+    state.detailsOpen.set(details.dataset.part, details.open)
+  }
+}
+
+function renderPart(part) {
+  if (!part || part.ignored) return null
+  if (part.type === "text") {
+    const block = el("div", "md")
+    renderMarkdown(block, part.text || "")
+    return block
+  }
+  if (part.type === "reasoning") {
+    const details = el("details", "reason")
+    details.dataset.part = part.id || ""
+    if (part.id && state.detailsOpen.get(part.id)) details.open = true
+    details.append(el("summary", null, "Reasoning"))
+    const block = el("div", "md")
+    renderMarkdown(block, part.text || "")
+    details.append(block)
+    return details
+  }
+  if (part.type === "tool") {
+    const toolState = part.state || {}
+    const details = el("details", "tool")
+    details.dataset.part = part.id || ""
+    if (part.id && state.detailsOpen.get(part.id)) details.open = true
+    const summary = el("summary")
+    summary.append(el("i", "dot " + (toolState.status || "pending")))
+    summary.append(el("span", "tool-name", part.tool || "tool"))
+    const one = toolSummary(part)
+    if (one) summary.append(el("span", "tool-sum", one))
+    details.append(summary)
+    if (toolState.input && typeof toolState.input === "object" && Object.keys(toolState.input).length) {
+      const pre = el("pre", "tool-in")
+      pre.append(el("code", null, pretty(toolState.input)))
+      details.append(pre)
+    }
+    const output = toolState.status === "error" ? toolState.error : toolState.output
+    if (output) {
+      const pre = el("pre", "tool-out" + (toolState.status === "error" ? " is-error" : ""))
+      pre.append(el("code", null, truncate(output, 4000)))
+      details.append(pre)
+    }
+    return details
+  }
+  if (part.type === "file") return el("div", "note mono", part.filename || part.url || "file")
+  if (part.type === "subtask") return el("div", "note", part.description || part.prompt || "Subtask")
+  if (part.type === "compaction") return el("div", "note", "Compaction")
+  if (part.type === "retry") return el("div", "note", errorText(part.error) || "Retrying")
+  if (part.type === "patch") return el("div", "note mono", (part.files || []).join(", "))
+  if (part.type === "agent") return el("div", "note", part.name || "Agent")
+  return null
+}
+
+function formatCost(value) {
+  if (typeof value !== "number" || !(value > 0)) return ""
+  if (value < 0.0001) return "<$0.0001"
+  return "$" + value.toFixed(value < 0.01 ? 4 : 2)
+}
+
+function renderMessageNode(message) {
+  const info = message.info || {}
+  const role = info.role || "assistant"
+  const article = el("article", "msg msg-" + role)
+  article.dataset.id = info.id || ""
+  if (role === "user") {
+    article.append(el("p", "kicker", "You"))
+    const body = el("div", "user-body")
+    let any = false
+    for (const part of message.parts || []) {
+      if (part?.type === "text") {
+        const block = el("div", "md")
+        renderMarkdown(block, part.text || "")
+        body.append(block)
+        any = true
+      } else {
+        const node = renderPart(part)
+        if (node) {
+          body.append(node)
+          any = true
+        }
+      }
+    }
+    if (!any) body.append(el("p", null, ""))
+    article.append(body)
+    return article
+  }
+  article.append(el("p", "kicker", "Assistant"))
+  for (const part of message.parts || []) {
+    const node = renderPart(part)
+    if (node) article.append(node)
+  }
+  if (info.error) article.append(el("div", "msg-error", errorText(info.error)))
+  const bits = []
+  const model = [info.providerID, info.modelID].filter(Boolean).join("/")
+  if (model) bits.push(model)
+  if (info.tokens) {
+    const input = Number(info.tokens.input) || 0
+    const output = Number(info.tokens.output) || 0
+    if (input || output) bits.push(`${input.toLocaleString()} in · ${output.toLocaleString()} out`)
+  }
+  const cost = formatCost(info.cost)
+  if (cost) bits.push(cost)
+  if (bits.length) article.append(el("footer", "msg-foot mono", bits.join("  ·  ")))
+  return article
+}
+
+function thread() {
+  let node = $("stream").querySelector(".thread")
+  if (!node) {
+    node = el("div", "thread")
+    $("stream").replaceChildren(node)
+  }
+  return node
+}
+
+function renderStream() {
+  const root = $("stream")
+  if (!state.activeId) {
+    const empty = el("div", "empty-main")
+    empty.append(el("p", null, "Select a session."))
+    root.replaceChildren(empty)
+  } else if (state.unavailable) {
+    const empty = el("div", "empty-main")
+    empty.append(el("p", null, "This session's project isn't available to the server."))
+    root.replaceChildren(empty)
+  } else if (state.loadingMessages) {
+    const empty = el("div", "empty-main")
+    empty.append(el("p", null, "Loading messages…"))
+    root.replaceChildren(empty)
+  } else if (!state.messages.length) {
+    const empty = el("div", "empty-main")
+    empty.append(el("p", null, "No messages yet."))
+    root.replaceChildren(empty)
+  } else {
+    const wrap = el("div", "thread")
+    for (const message of state.messages) wrap.append(renderMessageNode(message))
+    root.replaceChildren(wrap)
+  }
+  $("jump").hidden = state.stick || !state.activeId
+  if (state.stick) root.scrollTop = root.scrollHeight
+}
+
+const dirty = new Set()
+let dirtyFrame = 0
+function markDirty(id) {
+  if (!id) return
+  dirty.add(id)
+  if (dirtyFrame) return
+  dirtyFrame = requestAnimationFrame(flushDirty)
+}
+
+function flushDirty() {
+  dirtyFrame = 0
+  const root = $("stream")
+  if (!state.activeId || root.querySelector(".empty-main")) {
+    dirty.clear()
+    renderStream()
+    return
+  }
+  const wrap = thread()
+  const stick = state.stick
+  for (const id of dirty) {
+    const message = state.messages.find((item) => item.info?.id === id)
+    const existing = wrap.querySelector(`[data-id="${CSS.escape(id)}"]`)
+    captureDetails(existing)
+    if (!message) {
+      existing?.remove()
+      continue
+    }
+    const node = renderMessageNode(message)
+    if (existing) existing.replaceWith(node)
+    else wrap.append(node)
+  }
+  dirty.clear()
+  if (stick) root.scrollTop = root.scrollHeight
+  $("jump").hidden = stick || !state.activeId
+}
+
+function sortMessages() {
+  state.messages.sort((a, b) => (a.info?.time?.created || 0) - (b.info?.time?.created || 0) || String(a.info?.id || "").localeCompare(String(b.info?.id || "")))
+}
+
+function dropPending() {
+  const removed = []
+  state.messages = state.messages.filter((message) => {
+    if (String(message.info?.id || "").startsWith("pending:")) {
+      removed.push(message.info.id)
+      return false
+    }
+    return true
+  })
+  return removed
+}
+
+function upsertMessageInfo(info) {
+  if (!info?.id || info.sessionID !== state.activeId && info.sessionID) {
+    if (info?.sessionID && info.sessionID !== state.activeId) return
+  }
+  if (info.sessionID && info.sessionID !== state.activeId) return
+  if (info.role === "user") {
+    for (const id of dropPending()) {
+      thread().querySelector(`[data-id="${CSS.escape(id)}"]`)?.remove()
+    }
+  }
+  let message = state.messages.find((item) => item.info?.id === info.id)
+  if (!message) {
+    message = { info, parts: [] }
+    state.messages.push(message)
+    sortMessages()
+  } else {
+    message.info = { ...message.info, ...info }
+  }
+  markDirty(info.id)
+}
+
+function ensureMessage(messageID, sessionID) {
+  let message = state.messages.find((item) => item.info?.id === messageID)
+  if (!message) {
+    message = {
+      info: { id: messageID, sessionID, role: "assistant", time: { created: Date.now() } },
+      parts: [],
+    }
+    state.messages.push(message)
+    sortMessages()
+  }
+  return message
+}
+
+function upsertPart(part) {
+  if (!part?.messageID) return
+  if (part.sessionID && part.sessionID !== state.activeId) return
+  const message = ensureMessage(part.messageID, part.sessionID)
+  const index = message.parts.findIndex((item) => item.id === part.id)
+  if (index === -1) message.parts.push(part)
+  else message.parts[index] = part
+  markDirty(message.info.id)
+}
+
+function applyDelta(props) {
+  if (!props?.messageID || !props.partID) return
+  if (props.sessionID && props.sessionID !== state.activeId) return
+  const message = ensureMessage(props.messageID, props.sessionID)
+  let part = message.parts.find((item) => item.id === props.partID)
+  if (!part) {
+    part = {
+      id: props.partID,
+      messageID: props.messageID,
+      sessionID: props.sessionID,
+      type: props.field === "text" ? "text" : "reasoning",
+    }
+    message.parts.push(part)
+  }
+  const current = typeof part[props.field] === "string" ? part[props.field] : ""
+  part[props.field] = current + (props.delta || "")
+  if (!part.type) part.type = props.field === "text" ? "text" : "reasoning"
+  markDirty(message.info.id)
+}
+
+function removeMessage(messageID) {
+  state.messages = state.messages.filter((item) => item.info?.id !== messageID)
+  const node = $("stream").querySelector(`[data-id="${CSS.escape(messageID)}"]`)
+  if (node) node.remove()
+  else renderStream()
+}
+
+function removePart(messageID, partID) {
+  const message = state.messages.find((item) => item.info?.id === messageID)
+  if (!message) return
+  message.parts = message.parts.filter((part) => part.id !== partID)
+  markDirty(messageID)
+}
+
+function touchSession(id) {
+  const session = state.sessions.get(id)
+  if (!session) return
+  session.time = { ...(session.time || {}), updated: Date.now() }
+  scheduleSidebar()
+}
+
+function onEvent(packet) {
+  const event = packet?.event
+  if (!event?.type) return
+  const props = event.properties || {}
+  const type = event.type
+  if (type === "server.connected") {
+    state.conn = "live"
+    renderFooter()
+    return
+  }
+  if (type === "session.created" || type === "session.updated") {
+    if (props.info && !props.info.directory && packet.directory) props.info = { ...props.info, directory: packet.directory }
+    applySessionInfo(props.info)
+    return
+  }
+  if (type === "session.deleted") {
+    const id = props.sessionID || props.info?.id
+    if (!id) return
+    state.sessions.delete(id)
+    state.status.delete(id)
+    if (id === state.activeId) {
+      state.activeId = null
+      state.messages = []
+      showBanner("This session was deleted.")
+      renderStream()
+      renderHeader()
+    }
+    scheduleSidebar()
+    return
+  }
+  if (type === "session.status") {
+    if (props.sessionID) state.status.set(props.sessionID, props.status || { type: "idle" })
+    scheduleSidebar()
+    renderComposer()
+    if (props.status?.type === "idle") flushQueue(props.sessionID)
+    return
+  }
+  if (type === "session.idle") {
+    if (props.sessionID) state.status.set(props.sessionID, { type: "idle" })
+    scheduleSidebar()
+    renderComposer()
+    flushQueue(props.sessionID)
+    return
+  }
+  if (type === "session.error") {
+    if (props.sessionID === state.activeId && props.error) showBanner(errorText(props.error), "session-error")
+    return
+  }
+  if (type === "permission.asked" || type === "permission.updated" || type === "permission.v2.asked") {
+    upsertPermission(props)
+    return
+  }
+  if (type === "permission.replied" || type === "permission.v2.replied") {
+    removePermission(props.requestID || props.id)
+    return
+  }
+  if (type === "question.asked" || type === "question.v2.asked") {
+    if (props.id) {
+      state.questions = state.questions.filter((item) => item.id !== props.id)
+      state.questions.push(props)
+      renderPrompts()
+    }
+    return
+  }
+  if (type === "question.replied" || type === "question.rejected" || type === "question.v2.replied" || type === "question.v2.rejected") {
+    const id = props.requestID || props.id
+    state.questions = state.questions.filter((item) => item.id !== id)
+    renderPrompts()
+    return
+  }
+  const sessionID = props.sessionID || props.info?.sessionID || props.part?.sessionID
+  if (sessionID && sessionID !== state.activeId) {
+    if (type.startsWith("message.")) touchSession(sessionID)
+    return
+  }
+  if (type === "message.updated" && props.info) {
+    upsertMessageInfo(props.info)
+    if (props.info.sessionID) touchSession(props.info.sessionID)
+    return
+  }
+  if (type === "message.removed") {
+    removeMessage(props.messageID)
+    return
+  }
+  if (type === "message.part.updated" && props.part) {
+    upsertPart(props.part)
+    return
+  }
+  if (type === "message.part.delta") {
+    applyDelta(props)
+    return
+  }
+  if (type === "message.part.removed") {
+    removePart(props.messageID, props.partID)
+  }
+}
+
+function nearBottom() {
+  const root = $("stream")
+  return root.scrollHeight - root.scrollTop - root.clientHeight < 96
+}
+
+async function sleep(ms, signal) {
+  await new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms)
+    signal?.addEventListener("abort", () => {
+      clearTimeout(timer)
+      resolve()
+    }, { once: true })
+  })
+}
+
+async function pumpSse(body, onData, signal) {
+  const reader = body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ""
+  try {
+    while (!signal.aborted) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n")
+      let split
+      while ((split = buffer.indexOf("\n\n")) !== -1) {
+        const raw = buffer.slice(0, split)
+        buffer = buffer.slice(split + 2)
+        const data = raw.split("\n").filter((line) => line.startsWith("data:")).map((line) => line.slice(5).replace(/^ /, "")).join("\n")
+        if (!data || data === "[DONE]") continue
+        try { onData(JSON.parse(data)) } catch { /* keep the stream alive */ }
+      }
+    }
+  } finally {
+    try { reader.releaseLock() } catch { /* already released */ }
+  }
+}
+
+function unwrapEvent(data) {
+  if (data && data.payload && data.payload.type) return { event: data.payload, directory: data.directory || null }
+  return { event: data, directory: null }
+}
+
+let eventAbort = null
+function stopEvents() {
+  eventAbort?.abort()
+  eventAbort = new AbortController()
+  return eventAbort.signal
+}
+
+async function openEvent(path, directory, signal) {
+  const res = await apiFetch(withDir(path, directory), {
+    headers: { accept: "text/event-stream" },
+    signal,
+  })
+  return res
+}
+
+async function projectStreams(parent) {
+  const dirs = new Set()
+  for (const project of state.projects) if (project.worktree && project.worktree !== "/") dirs.add(project.worktree)
+  const active = currentSession()
+  if (active?.directory && active.directory !== "/") dirs.add(active.directory)
+  if (!dirs.size) throw new Error("no project event streams")
+  const child = new AbortController()
+  const onParentAbort = () => child.abort()
+  parent.addEventListener("abort", onParentAbort)
+  let opened = 0
+  try {
+    await Promise.all([...dirs].map(async (dir) => {
+      const res = await openEvent("/event", dir, child.signal)
+      if (parent.aborted || child.signal.aborted) return
+      if (res.status === 404 || res.status === 405) return
+      if (!res.ok || !res.body) throw Object.assign(new Error("event " + res.status), { status: res.status })
+      opened += 1
+      state.conn = "live"
+      renderFooter()
+      try {
+        await pumpSse(res.body, (data) => onEvent(unwrapEvent(data)), child.signal)
+      } catch (err) {
+        if (err.name !== "AbortError") throw err
+      }
+      if (!parent.aborted) child.abort()
+    }))
+  } catch (err) {
+    if (parent.aborted || err.name === "AbortError") return
+    throw err
+  } finally {
+    child.abort()
+    parent.removeEventListener("abort", onParentAbort)
+  }
+  if (parent.aborted) return
+  if (!opened) throw new Error("no project event streams")
+}
+
+async function connectEvents() {
+  const signal = stopEvents()
+  let mode = "global"
+  while (!signal.aborted) {
+    try {
+      if (mode === "global") {
+        const res = await openEvent("/global/event", undefined, signal)
+        if (res.status === 404 || res.status === 405) {
+          mode = "projects"
+          continue
+        }
+        if (!res.ok || !res.body) throw Object.assign(new Error("event " + res.status), { status: res.status })
+        state.conn = "live"
+        renderFooter()
+        await pumpSse(res.body, (data) => onEvent(unwrapEvent(data)), signal)
+      } else {
+        await projectStreams(signal)
+      }
+      if (signal.aborted) return
+    } catch (err) {
+      if (signal.aborted || err.name === "AbortError") return
+      if (err.status === 401) {
+        state.conn = "offline"
+        renderFooter()
+        return
+      }
+      state.conn = state.offline ? "offline" : "reconnecting"
+      renderFooter()
+    }
+    if (signal.aborted) return
+    state.conn = "reconnecting"
+    renderFooter()
+    await sleep(2000, signal)
+    if (signal.aborted) return
+    try {
+      await refreshSessions()
+      if (state.activeId && !state.unavailable) await reloadMessages()
+      await loadPermissions()
+    } catch { /* the banner already explains an outage */ }
+  }
+}
+
+async function reloadMessages() {
+  const session = currentSession()
+  if (!session) return
+  const gen = state.loadGen
+  try {
+    const messages = await getJSON(`/session/${encodeURIComponent(session.id)}/message?limit=300`, session.directory)
+    if (gen !== state.loadGen || state.activeId !== session.id) return
+    if (Array.isArray(messages)) {
+      state.messages = messages
+      sortMessages()
+      renderStream()
+    }
+  } catch (err) {
+    if (gen !== state.loadGen) return
+    if (err.status === 404) {
+      state.unavailable = true
+      showBanner("This session's project isn't available to the server.", "missing")
+      renderStream()
+      renderComposer()
+    }
+  }
+}
+
+function sessionFromHash() {
+  const match = location.hash.match(/^#\/s\/([^/?#]+)$/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+function setHash(id) {
+  const next = `#/s/${encodeURIComponent(id)}`
+  if (location.hash === next) return
+  state.ignoreHash = true
+  location.hash = next
+}
+
+async function openSession(id) {
+  if (!id) return
+  state.activeId = id
+  state.unavailable = false
+  state.stick = true
+  state.loadGen += 1
+  const gen = state.loadGen
+  setHash(id)
+  if (state.bannerKind === "missing" || state.bannerKind === "session-error") clearBanner()
+  state.messages = []
+  state.loadingMessages = true
+  renderSidebar()
+  renderHeader()
+  renderStream()
+  renderPrompts()
+  const known = state.sessions.get(id)
+  if (!known) {
+    state.loadingMessages = false
+    state.unavailable = true
+    showBanner("This session's project isn't available to the server.", "missing")
+    renderStream()
+    renderComposer()
+    return
+  }
+  try {
+    let full = null
+    try {
+      full = await getJSON(`/session/${encodeURIComponent(id)}`, known.directory)
+    } catch (err) {
+      if (err.status !== 404) throw err
+      try {
+        full = await getJSON(`/session/${encodeURIComponent(id)}`)
+      } catch {
+        throw err
+      }
+    }
+    if (gen !== state.loadGen) return
+    if (full?.id) applySessionInfo(full)
+    const directory = full?.directory || known.directory
+    const messages = await getJSON(`/session/${encodeURIComponent(id)}/message?limit=300`, directory)
+    if (gen !== state.loadGen) return
+    state.messages = Array.isArray(messages) ? messages : []
+    sortMessages()
+    state.loadingMessages = false
+    state.unavailable = false
+    renderHeader()
+    renderStream()
+    $("stream").scrollTop = $("stream").scrollHeight
+    loadPickers(directory)
+  } catch (err) {
+    if (gen !== state.loadGen) return
+    state.loadingMessages = false
+    if (err.status === 404) {
+      state.unavailable = true
+      showBanner("This session's project isn't available to the server.", "missing")
+    } else if (!err.offline && err.status !== 401) {
+      showBanner(err.message || "Couldn't open this session.")
+    }
+    renderStream()
+    renderComposer()
+  }
+}
+
+function splitModel(value) {
+  const index = String(value || "").indexOf("\u001f")
+  if (index === -1) return null
+  const providerID = value.slice(0, index)
+  const modelID = value.slice(index + 1)
+  if (!providerID || !modelID) return null
+  return { providerID, modelID }
+}
+
+function renderQueue() {
+  const root = $("queue")
+  root.replaceChildren()
+  const mine = state.queue.filter((item) => item.sessionId === state.activeId)
+  mine.forEach((item, index) => {
+    const row = el("div", "queue-item")
+    row.append(el("span", null, `Queued: ${item.text}`))
+    const remove = el("button", "text-btn", "Remove")
+    remove.type = "button"
+    remove.addEventListener("click", () => {
+      const at = state.queue.indexOf(item)
+      if (at !== -1) state.queue.splice(at, 1)
+      renderQueue()
+    })
+    row.append(remove)
+    root.append(row)
+    if (index === 0) row.title = "Sends when the session is idle"
+  })
+}
+
+function renderComposer() {
+  const session = currentSession()
+  const blocked = !session || state.unavailable
+  $("input").disabled = blocked
+  $("send").disabled = blocked
+  const busy = session ? isBusy(session.id) : false
+  $("stop").hidden = !busy
+  renderQueue()
+}
+
+async function postPrompt(sessionId, text) {
+  const session = state.sessions.get(sessionId)
+  if (!session) return
+  const body = { parts: [{ type: "text", text }] }
+  const model = splitModel(state.model)
+  if (model) body.model = model
+  if (state.agent) body.agent = state.agent
+  if (sessionId === state.activeId) {
+    const pending = {
+      info: { id: `pending:${Date.now()}`, role: "user", time: { created: Date.now() } },
+      parts: [{ id: `pending-part:${Date.now()}`, type: "text", text }],
+    }
+    state.messages.push(pending)
+    state.stick = true
+    markDirty(pending.info.id)
+  }
+  try {
+    await request("POST", `/session/${encodeURIComponent(sessionId)}/prompt_async`, session.directory, body)
+  } catch (err) {
+    if (sessionId === state.activeId) {
+      for (const id of dropPending()) {
+        $("stream").querySelector(`[data-id="${CSS.escape(id)}"]`)?.remove()
+      }
+    }
+    if (err.status === 400 && /busy/i.test(`${err.message} ${JSON.stringify(err.data || {})}`)) {
+      state.queue.push({ sessionId, text })
+      renderQueue()
+      return
+    }
+    throw err
+  }
+}
+
+let flushing = false
+async function flushQueue(sessionId) {
+  if (flushing || !sessionId || isBusy(sessionId)) return
+  const item = state.queue.find((entry) => entry.sessionId === sessionId)
+  if (!item) return
+  flushing = true
+  state.queue = state.queue.filter((entry) => entry !== item)
+  renderQueue()
+  try {
+    await postPrompt(sessionId, item.text)
+  } catch (err) {
+    state.queue.unshift(item)
+    renderQueue()
+    if (!err.offline) showBanner(err.message || "Couldn't send the queued message.")
+  } finally {
+    flushing = false
+  }
+}
+
+async function sendCurrent() {
+  const session = currentSession()
+  const text = $("input").value.trim()
+  if (!session || state.unavailable || !text) return
+  $("input").value = ""
+  growInput()
+  if (isBusy(session.id)) {
+    state.queue.push({ sessionId: session.id, text })
+    renderQueue()
+    return
+  }
+  try {
+    await postPrompt(session.id, text)
+  } catch (err) {
+    $("input").value = text
+    growInput()
+    if (!err.offline) showBanner(err.message || "Couldn't send the message.")
+  }
+}
+
+async function stopSession() {
+  const session = currentSession()
+  if (!session) return
+  try {
+    await request("POST", `/session/${encodeURIComponent(session.id)}/abort`, session.directory)
+  } catch (err) {
+    if (!err.offline) showBanner(err.message || "Couldn't stop the session.")
+  }
+}
+
+function growInput() {
+  const input = $("input")
+  input.style.height = "auto"
+  input.style.height = `${Math.min(input.scrollHeight, 200)}px`
+}
+
+function chooseProject() {
+  const projects = projectOptions()
+  if (!projects.length) {
+    showBanner("No projects are available yet. Open a directory with OpenCode first.")
+    return Promise.resolve(null)
+  }
+  const dialog = $("project-dialog")
+  const select = $("new-project")
+  select.replaceChildren()
+  for (const project of projects) {
+    const node = option(project.worktree, project.label)
+    node.title = project.worktree
+    select.append(node)
+  }
+  dialog.returnValue = ""
+  dialog.showModal()
+  return new Promise((resolve) => {
+    dialog.addEventListener("close", () => {
+      resolve(dialog.returnValue === "ok" ? select.value : null)
+    }, { once: true })
+  })
+}
+
+async function createSession() {
+  let directory = selectedProject()?.worktree
+  if (state.projectFilter === "all") {
+    directory = await chooseProject()
+    if (!directory) return
+  }
+  if (!directory || directory === "/") {
+    showBanner("Choose a project before starting a session.")
+    return
+  }
+  try {
+    const created = await request("POST", "/session", directory, {})
+    if (!created?.id) throw new Error("The server did not return a session.")
+    if (!created.directory) created.directory = directory
+    applySessionInfo(created)
+    await openSession(created.id)
+    $("input").focus()
+  } catch (err) {
+    if (!err.offline) showBanner(err.message || "Couldn't create a session.")
+  }
+}
+
+function startRename() {
+  const session = currentSession()
+  if (!session) return
+  const title = $("title")
+  const input = el("input", "rename-input")
+  input.value = session.title || ""
+  input.setAttribute("aria-label", "Session title")
+  title.replaceChildren(input)
+  input.focus()
+  input.select()
+  let done = false
+  const finish = async (save) => {
+    if (done) return
+    done = true
+    if (save) {
+      const next = input.value.trim()
+      if (next && next !== session.title) {
+        try {
+          const updated = await request("PATCH", `/session/${encodeURIComponent(session.id)}`, session.directory, { title: next })
+          if (updated?.id) applySessionInfo(updated)
+          else {
+            session.title = next
+            scheduleSidebar()
+          }
+        } catch (err) {
+          if (!err.offline) showBanner(err.message || "Couldn't rename the session.")
+        }
+      }
+    }
+    input.remove()
+    renderHeader()
+  }
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault()
+      finish(true)
+    } else if (event.key === "Escape") {
+      event.preventDefault()
+      finish(false)
+    }
+  })
+  input.addEventListener("blur", () => finish(true))
+}
+
+async function deleteSession() {
+  const session = currentSession()
+  if (!session) return
+  const name = session.title || "this session"
+  if (!confirm(`Delete “${name}”?`)) return
+  try {
+    await request("DELETE", `/session/${encodeURIComponent(session.id)}`, session.directory)
+  } catch (err) {
+    if (err.status !== 404) {
+      if (!err.offline) showBanner(err.message || "Couldn't delete the session.")
+      return
+    }
+  }
+  state.sessions.delete(session.id)
+  state.status.delete(session.id)
+  state.permissions = state.permissions.filter((item) => item.sessionID !== session.id)
+  state.activeId = null
+  state.messages = []
+  state.ignoreHash = true
+  history.replaceState(null, "", location.pathname + location.search)
+  clearBanner()
+  renderSidebar()
+  renderHeader()
+  renderStream()
+  renderPrompts()
+}
+
+function openSettings() {
+  $("set-url").value = state.settings.url
+  $("set-user").value = state.settings.username
+  $("set-pass").value = state.settings.password
+  const dialog = $("settings-dialog")
+  if (!dialog.open) dialog.showModal()
+}
+
+function sidebarNarrow() {
+  return window.matchMedia("(max-width: 760px)").matches
+}
+
+function syncSidebar() {
+  const sidebar = $("sidebar")
+  const collapsed = $("app").classList.contains("sidebar-collapsed")
+  const expanded = sidebarNarrow() ? sidebar.classList.contains("open") : !collapsed
+  sidebar.inert = !expanded
+  $("menu").setAttribute("aria-expanded", expanded ? "true" : "false")
+  $("hide-sessions").setAttribute("aria-expanded", expanded ? "true" : "false")
+}
+
+function rememberSidebar(collapsed) {
+  $("app").classList.toggle("sidebar-collapsed", collapsed)
+  localStorage.setItem("oc-ui-sidebar", collapsed ? "closed" : "open")
+  syncSidebar()
+}
+
+function closeDrawer() {
+  $("sidebar").classList.remove("open")
+  $("scrim").classList.remove("show")
+  syncSidebar()
+}
+
+function openDrawer() {
+  $("sidebar").classList.add("open")
+  $("scrim").classList.add("show")
+  syncSidebar()
+  $("search").focus()
+}
+
+function collapseSidebar() {
+  rememberSidebar(true)
+  closeDrawer()
+  $("menu").focus()
+}
+
+function expandSidebar() {
+  if (sidebarNarrow()) {
+    openDrawer()
+    return
+  }
+  rememberSidebar(false)
+  $("search").focus()
+}
+
+const LIBRARY_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+function libraryDirectory() {
+  return $("lib-project").value || pickerDirectory()
+}
+
+function libraryPath() {
+  const name = $("lib-name").value.trim()
+  const skill = state.libraryKind === "skill"
+  const global = $("lib-scope").value === "global"
+  const file = skill ? `skills/${name || "name"}/SKILL.md` : `agents/${name || "name"}.md`
+  if (global) return `~/.config/opencode/${file}`
+  const dir = ($("lib-project").value || "").replace(/\/+$/, "")
+  return `${dir || "<project>"}/.opencode/${file}`
+}
+
+function syncLibraryForm() {
+  const skill = state.libraryKind === "skill"
+  $("lib-tab-agent").setAttribute("aria-selected", String(!skill))
+  $("lib-tab-skill").setAttribute("aria-selected", String(skill))
+  $("lib-lead").textContent = skill
+    ? "A skill is a SKILL.md file the agent loads when a task matches the description. The folder name and the name field are the same."
+    : "An agent is a markdown file. Primary agents appear in the menu. Subagents are ones another agent can call. The text below the header is its prompt."
+  $("lib-mode-wrap").hidden = skill
+  $("lib-body").placeholder = skill
+    ? "The steps to follow once this skill is loaded."
+    : "How this agent should work."
+  const global = $("lib-scope").value === "global"
+  $("lib-project-wrap").hidden = global
+  const name = $("lib-name").value.trim()
+  const path = libraryPath()
+  if (!name) $("lib-path").textContent = `Saves to ${path}. Use lowercase words separated by hyphens.`
+  else if (!LIBRARY_NAME.test(name) || name.length > 64) $("lib-path").textContent = "Use lowercase letters, numbers, and single hyphens, up to 64 characters."
+  else $("lib-path").textContent = `Saves to ${path}`
+}
+
+function shortLocation(location, directory) {
+  const value = String(location || "")
+  if (!value || value === "<built-in>") return "Built in"
+  if (directory && value.startsWith(directory)) return "This project"
+  if (value.includes("/.config/opencode/")) return "Every project"
+  const parts = value.split("/").filter(Boolean)
+  return parts.slice(-3, -1).join("/") || value
+}
+
+function renderLibraryList() {
+  const list = $("lib-list")
+  const directory = $("lib-scope").value === "project" ? $("lib-project").value : ""
+  const rows = []
+  if (state.libraryKind === "agent") {
+    for (const agent of state.libraryAgents) {
+      if (!agent?.name || agent.hidden) continue
+      rows.push({ name: agent.name, meta: agent.native ? "Built in" : (agent.mode || "agent") })
+    }
+  } else {
+    for (const skill of state.librarySkills) {
+      if (!skill?.name) continue
+      rows.push({ name: skill.name, meta: shortLocation(skill.location, directory) })
+    }
+  }
+  rows.sort((a, b) => a.name.localeCompare(b.name))
+  list.replaceChildren()
+  if (!rows.length) {
+    list.append(el("div", "lib-row", "Nothing loaded for this project yet."))
+    return
+  }
+  for (const row of rows) {
+    const line = el("div", "lib-row")
+    line.setAttribute("role", "listitem")
+    line.append(el("span", null, row.name), el("span", null, row.meta))
+    list.append(line)
+  }
+}
+
+function fillLibraryProjects() {
+  const select = $("lib-project")
+  const preferred = currentSession()?.directory || selectedProject()?.worktree || select.value || ""
+  select.replaceChildren(option("", "Choose a project"))
+  for (const project of projectOptions()) select.append(option(project.worktree, project.label))
+  if (preferred && [...select.options].some((item) => item.value === preferred)) select.value = preferred
+}
+
+async function loadLibrary() {
+  const dir = $("lib-scope").value === "project" ? $("lib-project").value : libraryDirectory()
+  if ($("lib-scope").value === "project" && !dir) {
+    state.libraryAgents = []
+    state.librarySkills = []
+    const list = $("lib-list")
+    list.replaceChildren(el("div", "lib-row", "Choose a project to see what is already loaded."))
+    return
+  }
+  try {
+    const agents = await getJSON("/agent", dir || undefined)
+    state.libraryAgents = Array.isArray(agents) ? agents : []
+  } catch {
+    state.libraryAgents = []
+  }
+  try {
+    const skills = await getJSON("/skill", dir || undefined)
+    state.librarySkills = Array.isArray(skills) ? skills : []
+  } catch {
+    state.librarySkills = []
+  }
+  renderLibraryList()
+}
+
+function openLibrary() {
+  fillLibraryProjects()
+  $("lib-result").hidden = true
+  $("lib-result").replaceChildren()
+  syncLibraryForm()
+  const dialog = $("library-dialog")
+  if (!dialog.open) dialog.showModal()
+  loadLibrary()
+}
+
+function showLibraryResult(message, isError, extra) {
+  const box = $("lib-result")
+  box.hidden = false
+  box.replaceChildren(el("p", isError ? "hint warn" : "hint", message))
+  if (!extra?.content) return
+  const head = el("div", "codehead")
+  head.append(el("span", null, extra.path || "file"), copyButton(extra.content))
+  const pre = el("pre")
+  pre.append(el("code", null, extra.content))
+  const block = el("div", "codeblock")
+  block.append(head, pre)
+  box.append(block)
+}
+
+async function postLibrary(body) {
+  const res = await fetch("/_library", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify(body),
+  })
+  const text = await res.text()
+  let data = null
+  if (text) {
+    try { data = JSON.parse(text) } catch { data = { error: text } }
+  }
+  if (res.status === 409) {
+    const err = new Error(data?.error || "A file with that name already exists")
+    err.status = 409
+    err.data = data
+    throw err
+  }
+  if (!res.ok) throw new Error(data?.error || `Could not save (${res.status})`)
+  return data
+}
+
+async function saveLibrary(event) {
+  event.preventDefault()
+  const name = $("lib-name").value.trim()
+  const description = $("lib-desc").value.trim()
+  const body = $("lib-body").value.trim()
+  const scope = $("lib-scope").value
+  const directory = scope === "project" ? $("lib-project").value : ""
+  if (!LIBRARY_NAME.test(name) || name.length > 64) {
+    showLibraryResult("Use a lowercase name with single hyphens, up to 64 characters.", true)
+    return
+  }
+  if (!description || description.length > 1024) {
+    showLibraryResult("Add a description of what this is for, up to 1024 characters.", true)
+    return
+  }
+  if (!body) {
+    showLibraryResult("Add the instructions.", true)
+    return
+  }
+  if (scope === "project" && !directory) {
+    showLibraryResult("Choose a project. The project list is empty until a session is loaded.", true)
+    return
+  }
+  const payload = {
+    kind: state.libraryKind,
+    scope,
+    directory,
+    name,
+    description,
+    body,
+    mode: $("lib-mode").value,
+  }
+  const button = $("lib-save")
+  button.disabled = true
+  try {
+    let data
+    try {
+      data = await postLibrary(payload)
+    } catch (err) {
+      if (err.status !== 409) throw err
+      if (!confirm("A file with that name already exists. Replace it?")) {
+        showLibraryResult(err.message, true, err.data)
+        return
+      }
+      data = await postLibrary({ ...payload, overwrite: true })
+    }
+    if (data?.written) {
+      showLibraryResult(`Saved ${data.path}. OpenCode reads it on the next turn.`, false)
+      state.pickerDir = null
+      loadPickers(directory || pickerDirectory())
+      loadLibrary()
+    } else {
+      showLibraryResult(data?.reason || "The file was not written. Copy it to the path above.", true, data)
+    }
+  } catch (err) {
+    showLibraryResult(err.message || "Could not save the file", true)
+  } finally {
+    button.disabled = false
+  }
+}
+
+function bind() {
+  $("project").addEventListener("change", () => {
+    state.projectFilter = $("project").value || "all"
+    renderSidebar()
+    loadPickers(pickerDirectory())
+  })
+  let searchTimer = 0
+  $("search").addEventListener("input", () => {
+    state.query = $("search").value
+    renderSidebar()
+    clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => searchDb(state.query.trim()), 250)
+  })
+  $("new-session").addEventListener("click", createSession)
+  $("menu").addEventListener("click", () => {
+    if (sidebarNarrow()) {
+      if ($("sidebar").classList.contains("open")) closeDrawer()
+      else openDrawer()
+      return
+    }
+    expandSidebar()
+  })
+  $("hide-sessions").addEventListener("click", collapseSidebar)
+  window.matchMedia("(max-width: 760px)").addEventListener("change", syncSidebar)
+  syncSidebar()
+  $("scrim").addEventListener("click", closeDrawer)
+  $("library-btn").addEventListener("click", openLibrary)
+  $("lib-tab-agent").addEventListener("click", () => {
+    state.libraryKind = "agent"
+    syncLibraryForm()
+    renderLibraryList()
+  })
+  $("lib-tab-skill").addEventListener("click", () => {
+    state.libraryKind = "skill"
+    syncLibraryForm()
+    renderLibraryList()
+  })
+  $("lib-scope").addEventListener("change", () => {
+    syncLibraryForm()
+    loadLibrary()
+  })
+  $("lib-project").addEventListener("change", () => {
+    syncLibraryForm()
+    loadLibrary()
+  })
+  $("lib-name").addEventListener("input", () => {
+    $("lib-result").hidden = true
+    syncLibraryForm()
+  })
+  $("lib-desc").addEventListener("input", () => { $("lib-result").hidden = true })
+  $("lib-body").addEventListener("input", () => { $("lib-result").hidden = true })
+  $("lib-close").addEventListener("click", () => $("library-dialog").close())
+  $("library-form").addEventListener("submit", saveLibrary)
+  $("settings-btn").addEventListener("click", openSettings)
+  $("settings-dialog").addEventListener("close", () => {
+    if ($("settings-dialog").returnValue !== "save") return
+    state.settings = {
+      url: $("set-url").value.trim(),
+      username: $("set-user").value,
+      password: $("set-pass").value,
+    }
+    localStorage.setItem("oc-ui-settings", JSON.stringify(state.settings))
+    state.pickerDir = null
+    refreshSessions().then(() => {
+      loadPickers()
+      connectEvents()
+      if (state.activeId) openSession(state.activeId)
+    })
+  })
+  $("rename").addEventListener("click", startRename)
+  $("delete").addEventListener("click", deleteSession)
+  $("agent").addEventListener("change", () => {
+    state.agent = $("agent").value
+    localStorage.setItem("oc-ui-agent", state.agent)
+  })
+  $("model").addEventListener("change", () => {
+    state.model = $("model").value
+    localStorage.setItem("oc-ui-model", state.model)
+  })
+  $("composer").addEventListener("submit", (event) => {
+    event.preventDefault()
+    sendCurrent()
+  })
+  $("stop").addEventListener("click", stopSession)
+  $("input").addEventListener("input", growInput)
+  $("input").addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.shiftKey || event.isComposing) return
+    const coarse = window.matchMedia("(pointer: coarse)").matches
+    if (coarse && !(event.metaKey || event.ctrlKey)) return
+    event.preventDefault()
+    sendCurrent()
+  })
+  $("stream").addEventListener("scroll", () => {
+    state.stick = nearBottom()
+    $("jump").hidden = state.stick || !state.activeId
+  }, { passive: true })
+  $("jump").addEventListener("click", () => {
+    state.stick = true
+    $("stream").scrollTop = $("stream").scrollHeight
+    $("jump").hidden = true
+  })
+  $("stream").addEventListener("toggle", (event) => {
+    const details = event.target
+    if (details instanceof HTMLDetailsElement && details.dataset.part) {
+      state.detailsOpen.set(details.dataset.part, details.open)
+    }
+  }, true)
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeDrawer()
+  })
+  window.addEventListener("hashchange", () => {
+    if (state.ignoreHash) {
+      state.ignoreHash = false
+      return
+    }
+    const id = sessionFromHash()
+    if (id && id !== state.activeId) openSession(id)
+  })
+}
+
+async function main() {
+  loadLocal()
+  bind()
+  renderProjectSelect()
+  renderPickers()
+  renderHeader()
+  renderStream()
+  renderFooter()
+  await refreshSessions()
+  await Promise.allSettled([loadPickers(), loadPermissions(), loadQuestions()])
+  connectEvents()
+  const deep = sessionFromHash()
+  if (deep) await openSession(deep)
+  setInterval(() => { refreshSessions() }, 60000)
+  setInterval(() => { renderSidebar() }, 30000)
+}
+
+main()
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+# The UI container uses the host network so it can reach `opencode serve`
+# on 127.0.0.1. `ports:` is ignored with host networking; HOST and PORT
+# are the addresses the process actually binds.
+name: openview
+
+services:
+  ui:
+    build: .
+    image: openview
+    network_mode: host
+    environment:
+      HOST: ${HOST:-127.0.0.1}
+      PORT: ${PORT:-8080}
+      OPENCODE_URL: ${OPENCODE_URL:-http://127.0.0.1:4096}
+      OPENCODE_SERVER_USERNAME: ${OPENCODE_SERVER_USERNAME:-opencode}
+      OPENCODE_SERVER_PASSWORD: ${OPENCODE_SERVER_PASSWORD:-}
+      UI_USERNAME: ${UI_USERNAME:-}
+      UI_PASSWORD: ${UI_PASSWORD:-}
+      OPENCODE_DB: ${OPENCODE_DB:-/data/opencode/opencode.db}
+    volumes:
+      - type: bind
+        source: ${OPENCODE_DATA_DIR:-${HOME}/.local/share/opencode}
+        target: /data/opencode
+        read_only: true
+    restart: unless-stopped
