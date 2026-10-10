@@ -96,7 +96,7 @@ The database path is `OPENCODE_DB`, then `$XDG_DATA_HOME/opencode/opencode.db`, 
 
 API rows win over database rows when both exist. A database session whose project the server cannot open shows: “This session’s project isn’t available to the server.”
 
-The header project menu defaults to **All projects**. That view lists the eight newest sessions under Recents, then each project from most sessions to fewest, with that project's sessions underneath. **+** on a project starts a session there. Choosing one project limits the sidebar to it. **New session** creates the session in the chosen project, and in All projects it asks which project to use.
+The header project menu defaults to **All projects**. That view lists the eight newest sessions under Recents, then each project from most sessions to fewest, with that project's sessions underneath. The chevron beside Home, Recents, or a project hides that list, and the choice is remembered. **+** on a project starts a session there. Choosing one project limits the sidebar to it. **New session** creates the session in the chosen project, and in All projects it asks which project to use.
 
 ## Home
 
@@ -137,5 +137,5 @@ When the proxy runs in Docker it cannot see your config directory, so a global s
 - Questions from the model can be answered or dismissed. There is no file upload or fork. Diff and undo are in the session view.
 - A direct server URL (settings dialog) needs OpenCode’s `--cors` flag. The proxy path does not.
 - The database reader can miss a session that has not been committed yet, and it cannot revive a project the running server has never opened. Those rows still appear, and opening them explains that the project is unavailable.
-- Model and agent menus come from `GET /config/providers` and `GET /agent`. A project with neither configured still lets you send with the server’s defaults. New agents and skills are files written by Library; the menu refreshes after a primary agent is saved.
+- Model and agent menus come from `GET /config/providers` and `GET /agent` for the open session, or for the home folder when none is open. Switching folder replaces that list. The starting choices are the build agent and Big Pickle. A project with neither configured still lets you send with the server’s defaults. New agents and skills are files written by Library; the menu refreshes after a primary agent is saved.
 - Status, permissions, and agents are best-effort. A missing optional route does not blank the page.
