@@ -96,7 +96,7 @@ The database path is `OPENCODE_DB`, then `$XDG_DATA_HOME/opencode/opencode.db`, 
 
 API rows win over database rows when both exist. A database session whose project the server cannot open shows: “This session’s project isn’t available to the server.”
 
-The header project menu defaults to **All projects**. That view groups by the last two path segments, then by Today, Yesterday, This week, and Older. Choosing one project limits the sidebar to it, and **New session** creates the session there. In All projects, New session asks which project to use.
+The header project menu defaults to **All projects**. That view lists the eight newest sessions under Recents, then each project from most sessions to fewest, with that project's sessions underneath. **+** on a project starts a session there. Choosing one project limits the sidebar to it. **New session** creates the session in the chosen project, and in All projects it asks which project to use.
 
 ## Real-time
 

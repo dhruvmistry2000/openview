@@ -97,7 +97,7 @@
   #composer:focus-within { border-color: color-mix(in srgb, var(--cobalt) 40%, var(--line)); }
   #session-list { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 10px 0 8px; }
   .group { margin: 0 0 14px; }
-  .group h2, .bucket h3 {
+  .section-label, .group h2, .bucket h3 {
     margin: 0;
     padding: 14px 18px 4px;
     font-size: 12px;
@@ -105,7 +105,42 @@
     letter-spacing: -0.01em;
     color: var(--ink-soft);
   }
+  .section-label {
+    padding-top: 10px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
   .bucket h3 { font-weight: 500; font-size: 11px; letter-spacing: 0.01em; padding-top: 6px; }
+  .group-head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 8px 2px 18px;
+  }
+  .group-head h2 {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .group-add {
+    appearance: none;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink-soft);
+    font-size: 18px;
+    line-height: 1;
+    padding: 0;
+  }
+  .group-add:hover { color: var(--ink); background: var(--fill); }
   .session {
     display: grid;
     grid-template-columns: 8px minmax(0, 1fr) auto;
@@ -1119,6 +1154,44 @@ function scheduleSidebar() {
   })
 }
 
+function projectGroups(sessions) {
+  const groups = new Map()
+  for (const session of sessions) {
+    const directory = session.directory || ""
+    const key = directory || session.projectID || projectLabel(directory)
+    if (!groups.has(key)) {
+      groups.set(key, {
+        label: projectLabel(directory),
+        directory,
+        sessions: [],
+        newest: 0,
+      })
+    }
+    const group = groups.get(key)
+    group.sessions.push(session)
+    group.newest = Math.max(group.newest, session.time?.updated || 0)
+  }
+  return [...groups.values()].sort((a, b) => b.sessions.length - a.sessions.length || b.newest - a.newest || a.label.localeCompare(b.label))
+}
+
+function projectHead(label, directory) {
+  const head = el("div", "group-head")
+  const heading = el("h2", null, label)
+  heading.title = directory || label
+  head.append(heading)
+  if (!directory || directory === "/") return head
+  const add = el("button", "group-add", "+")
+  add.type = "button"
+  add.setAttribute("aria-label", `New session in ${label}`)
+  add.title = `New session in ${label}`
+  add.addEventListener("click", () => {
+    closeDrawer()
+    createSession(directory)
+  })
+  head.append(add)
+  return head
+}
+
 function renderSidebar() {
   const list = $("session-list")
   const top = list.scrollTop
@@ -1127,25 +1200,21 @@ function renderSidebar() {
   if (!sessions.length) {
     frag.append(el("p", "empty", state.query ? "No matching sessions" : "No sessions"))
   } else if (state.projectFilter === "all") {
-    const groups = new Map()
-    for (const session of sessions) {
-      const label = projectLabel(session.directory)
-      if (!groups.has(label)) groups.set(label, { label, sessions: [], newest: 0, directory: session.directory })
-      const group = groups.get(label)
-      group.sessions.push(session)
-      group.newest = Math.max(group.newest, session.time?.updated || 0)
-    }
-    const ordered = [...groups.values()].sort((a, b) => b.newest - a.newest)
-    for (const group of ordered) {
+    const recent = el("section", "group")
+    recent.append(el("h2", "section-label", "Recents"))
+    for (const session of sessions.slice(0, 8)) recent.append(sessionButton(session))
+    frag.append(recent)
+    frag.append(el("h2", "section-label", "Projects"))
+    for (const group of projectGroups(sessions)) {
       const section = el("section", "group")
-      const heading = el("h2", null, group.label)
-      heading.title = group.directory || group.label
-      section.append(heading)
-      appendBuckets(section, group.sessions)
+      section.append(projectHead(group.label, group.directory))
+      for (const session of group.sessions) section.append(sessionButton(session))
       frag.append(section)
     }
   } else {
+    const project = selectedProject()
     const section = el("section", "group")
+    if (project) section.append(projectHead(project.label, project.worktree))
     appendBuckets(section, sessions)
     frag.append(section)
   }
@@ -2924,9 +2993,10 @@ function chooseProject() {
   })
 }
 
-async function createSession() {
-  let directory = selectedProject()?.worktree
-  if (state.projectFilter === "all") {
+async function createSession(directory) {
+  if (typeof directory !== "string") directory = ""
+  if (!directory) directory = selectedProject()?.worktree || ""
+  if (!directory && state.projectFilter === "all") {
     directory = await chooseProject()
     if (!directory) return
   }
