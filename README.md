@@ -28,13 +28,27 @@ The proxy itself runs on Node 18 or newer. Without `node:sqlite`, the sidebar st
 
 ## Start it
 
-In one terminal, start OpenCode:
+From this directory:
+
+```bash
+./start.sh
+```
+
+On Windows:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\start.ps1
+```
+
+The script starts `opencode serve` on 127.0.0.1:4096 when that port is free, then runs the proxy in the foreground. Stopping the script also stops the OpenCode process it started. An OpenCode server that was already running is left alone.
+
+To start the two processes yourself, run OpenCode in one terminal:
 
 ```bash
 opencode serve --port 4096
 ```
 
-In another terminal, from this directory:
+And the proxy from this directory in another:
 
 ```bash
 node server.mjs
