@@ -2,8 +2,9 @@
  * Zero-dependency proxy for Openview.
  *
  * Serves index.html at "/" and forwards every other request to the OpenCode
- * HTTP server. GET /_db/sessions reads the local SQLite database read-only.
- * POST /_library writes one agent or skill markdown file.
+ * HTTP server. GET /_home returns this machine's home directory. GET /_db/sessions
+ * reads the local SQLite database read-only. POST /_library writes one agent
+ * or skill markdown file.
  *
  * Node 22+ is required for the database endpoint (node:sqlite). The proxy
  * itself runs on Node 18+.
@@ -587,6 +588,15 @@ const server = http.createServer((req, res) => {
     return
   }
   const url = new URL(req.url || "/", "http://127.0.0.1")
+  if (req.method === "GET" && url.pathname === "/_home") {
+    const directory = os.homedir()
+    if (!directory || directory === path.parse(directory).root) {
+      sendJson(res, 404, { error: "Home directory is not available" })
+      return
+    }
+    sendJson(res, 200, { directory })
+    return
+  }
   if (req.method === "GET" && url.pathname === "/_db/sessions") {
     handleDbSessions(req, res)
     return

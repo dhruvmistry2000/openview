@@ -96,6 +96,7 @@
   }
   #composer:focus-within { border-color: color-mix(in srgb, var(--cobalt) 40%, var(--line)); }
   #session-list { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 10px 0 8px; }
+  #session-list .empty { margin: 0; padding: 4px 18px 8px; color: var(--ink-soft); font-size: 13px; }
   .group { margin: 0 0 14px; }
   .section-label, .group h2, .bucket h3 {
     margin: 0;
@@ -190,18 +191,19 @@
     padding-bottom: calc(10px + env(safe-area-inset-bottom));
     min-height: 40px;
   }
-  .text-btn, .ghost, #send, #stop, #settings-btn, #library-btn {
+  .text-btn, .ghost, #send, #stop, #settings-btn, #library-btn, #home-btn {
     background: transparent;
     border: 1px solid transparent;
     border-radius: 8px;
     padding: 6px 8px;
   }
-  .text-btn, #settings-btn, #library-btn, #menu { color: var(--ink-soft); }
+  .text-btn, #settings-btn, #library-btn, #home-btn, #menu { color: var(--ink-soft); }
   .text-btn { padding-left: 2px; }
-  .text-btn:hover, #settings-btn:hover, #library-btn:hover, #menu:hover {
+  .text-btn:hover, #settings-btn:hover, #library-btn:hover, #home-btn:hover, #menu:hover {
     color: var(--ink);
     background: var(--fill);
   }
+  #home-btn[aria-current="page"] { color: var(--ink); }
   .ghost { border-color: var(--line); background: transparent; color: var(--ink-soft); }
   .ghost:hover { color: var(--ink); background: var(--fill); }
   .ghost.danger { color: var(--danger); }
@@ -348,10 +350,122 @@
     overscroll-behavior: contain;
     padding: 12px 20px 28px;
   }
-  #stream:has(.empty-main) { display: flex; }
+  #stream:has(.empty-main), #stream:has(.home) { display: flex; }
   .thread { max-width: 760px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
   .empty-main { color: var(--ink-soft); margin: auto; text-align: center; }
   .empty-main p { margin: 0; }
+  .home { margin: 0 auto; width: min(680px, 100%); text-align: center; }
+  .home h2 {
+    margin: 0;
+    font-size: clamp(32px, 5vw, 44px);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.15;
+  }
+  .home p { margin: 10px 0 0; color: var(--ink-soft); font-size: 13px; }
+  #main.home-view { justify-content: center; padding-bottom: 8vh; }
+  @media (min-width: 761px) {
+    #app:not(.sidebar-collapsed) #main.home-view { padding-left: 312px; }
+  }
+  #main.home-view #stream {
+    flex: 0 1 auto;
+    overflow: visible;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 0;
+  }
+  #main.home-view #composer {
+    width: min(680px, calc(100% - 48px));
+    margin: 22px auto 0;
+    padding: 14px 12px 10px 18px;
+    border-radius: 26px;
+    background: var(--fog);
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+  #main.home-view #input { min-height: 56px; font-size: 16px; padding: 8px 2px 4px; }
+  #main.home-view .composer-row { width: 100%; }
+  #main.home-view #send {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    margin-left: auto;
+    padding: 0;
+    border-radius: 999px;
+  }
+  #home-suggest {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    width: min(680px, calc(100% - 48px));
+    margin: 16px auto 0;
+  }
+  .home-chip {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 13.5px;
+  }
+  .home-chip:hover { background: var(--fill); }
+  #main.home-view .home h2,
+  #main.home-view .home p,
+  #main.home-view #composer,
+  #main.home-view .home-chip {
+    animation: home-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  #main.home-view .home p { animation-delay: 0.08s; }
+  #main.home-view #composer { animation-delay: 0.14s; }
+  #main.is-sending #home-suggest { opacity: 0.45; pointer-events: none; }
+  .home-working { text-align: left; }
+  .home-working .msg, .home-working .thinking { animation: home-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .home-working .thinking { animation-delay: 0.12s; }
+  .thinking {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+    color: var(--ink-soft);
+    font-size: 13px;
+  }
+  .dots { display: inline-flex; gap: 4px; align-items: center; height: 12px; }
+  .dots i {
+    display: block;
+    width: 6px;
+    height: 6px;
+    border-radius: 99px;
+    background: var(--cobalt);
+    animation: think 1s ease-in-out infinite;
+  }
+  .dots i:nth-child(2) { animation-delay: 0.15s; }
+  .dots i:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes home-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes think {
+    0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-3px); }
+  }
+  #send.is-wait { position: relative; color: transparent; }
+  #send.is-wait::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--paper);
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
   .msg-user .user-body {
     background: var(--user);
     border-left: 2px solid color-mix(in srgb, var(--cobalt) 55%, var(--line));
@@ -630,6 +744,9 @@
     #stream { padding-left: 14px; padding-right: 14px; }
     #session-bar, #revert-bar, #prompts, #banner { width: min(760px, calc(100% - 28px)); }
     #composer { width: min(792px, calc(100% - 20px)); border-radius: 14px; }
+    #main.home-view { padding-bottom: 4vh; }
+    #main.home-view #composer,
+    #home-suggest { width: min(680px, calc(100% - 28px)); }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -651,6 +768,7 @@
     <label>Project
       <select id="project" aria-label="Project"></select>
     </label>
+    <button id="home-btn" type="button" hidden>Home</button>
     <button id="library-btn" type="button">Library</button>
     <button id="settings-btn" type="button">Settings</button>
     <button id="show-changes" class="icon-btn" type="button" hidden aria-expanded="true" aria-controls="changes" aria-label="Hide changes">
@@ -702,6 +820,7 @@
         <button id="send" type="submit">Send</button>
       </div>
     </form>
+    <div id="home-suggest" hidden></div>
   </main>
   <aside id="changes" hidden>
     <div class="side-head">
@@ -822,6 +941,10 @@ const state = {
   loadGen: 0,
   ignoreHash: false,
   detailsOpen: new Map(),
+  home: "",
+  listed: false,
+  starting: false,
+  outgoing: "",
   bannerKind: "",
   libraryKind: "agent",
   libraryAgents: [],
@@ -976,10 +1099,20 @@ function projectLabel(dir) {
   return parts.slice(-2).join("/")
 }
 
+function cleanDir(value) {
+  return String(value || "").replace(/\/+$/, "")
+}
+
+function isHomeDir(directory) {
+  const home = cleanDir(state.home)
+  const dir = cleanDir(directory)
+  return Boolean(home && dir === home)
+}
+
 function projectOptions() {
   const map = new Map()
   for (const project of state.projects) {
-    if (!project.worktree || project.worktree === "/") continue
+    if (!project.worktree || project.worktree === "/" || isHomeDir(project.worktree)) continue
     map.set(project.id, {
       id: project.id,
       worktree: project.worktree,
@@ -987,7 +1120,7 @@ function projectOptions() {
     })
   }
   for (const session of state.sessions.values()) {
-    if (!session.directory || session.directory === "/") continue
+    if (!session.directory || session.directory === "/" || isHomeDir(session.directory)) continue
     const known = [...map.values()].some((project) => project.id === session.projectID || project.worktree === session.directory)
     if (known) continue
     const id = session.projectID || session.directory
@@ -1197,19 +1330,35 @@ function renderSidebar() {
   const top = list.scrollTop
   const frag = document.createDocumentFragment()
   const sessions = visibleSessions()
-  if (!sessions.length) {
+  if (state.projectFilter === "all" && state.home) {
+    const mine = sessions.filter((session) => isHomeDir(session.directory))
+    const section = el("section", "group")
+    section.append(projectHead("Home", state.home))
+    if (!mine.length && state.listed && !state.query) section.append(el("p", "empty", "No sessions yet"))
+    for (const session of mine) section.append(sessionButton(session))
+    frag.append(section)
+  }
+  const projectSessions = sessions.filter((session) => !isHomeDir(session.directory))
+  if (!sessions.length && !(state.projectFilter === "all" && state.home)) {
     frag.append(el("p", "empty", state.query ? "No matching sessions" : "No sessions"))
   } else if (state.projectFilter === "all") {
-    const recent = el("section", "group")
-    recent.append(el("h2", "section-label", "Recents"))
-    for (const session of sessions.slice(0, 8)) recent.append(sessionButton(session))
-    frag.append(recent)
-    frag.append(el("h2", "section-label", "Projects"))
-    for (const group of projectGroups(sessions)) {
-      const section = el("section", "group")
-      section.append(projectHead(group.label, group.directory))
-      for (const session of group.sessions) section.append(sessionButton(session))
-      frag.append(section)
+    if (sessions.length) {
+      const recent = el("section", "group")
+      recent.append(el("h2", "section-label", "Recents"))
+      for (const session of sessions.slice(0, 8)) recent.append(sessionButton(session))
+      frag.append(recent)
+    } else if (state.query) {
+      frag.append(el("p", "empty", "No matching sessions"))
+    }
+    const groups = projectGroups(projectSessions)
+    if (groups.length) {
+      frag.append(el("h2", "section-label", "Projects"))
+      for (const group of groups) {
+        const section = el("section", "group")
+        section.append(projectHead(group.label, group.directory))
+        for (const session of group.sessions) section.append(sessionButton(session))
+        frag.append(section)
+      }
     }
   } else {
     const project = selectedProject()
@@ -1271,12 +1420,20 @@ function renderRevertBar() {
 
 function renderHeader() {
   const session = currentSession()
+  const onHome = !session && Boolean(state.home)
   renderRevertBar()
   const title = $("title")
   if (title.querySelector("input")) return
   title.textContent = session ? (session.title || "Untitled") : "Openview"
   $("session-bar").hidden = !session
-  $("composer").hidden = !session
+  const enteredHome = onHome && !$("main").classList.contains("home-view")
+  $("main").classList.toggle("home-view", onHome)
+  $("main").classList.toggle("is-sending", Boolean(state.starting))
+  $("composer").hidden = !session && !onHome
+  renderHomeSuggest(enteredHome)
+  $("home-btn").hidden = !state.home
+  if (onHome) $("home-btn").setAttribute("aria-current", "page")
+  else $("home-btn").removeAttribute("aria-current")
   const path = $("path")
   path.textContent = session?.directory || ""
   path.title = session?.directory || ""
@@ -1589,6 +1746,7 @@ async function loadPickers(directory) {
 async function loadStatuses() {
   const dirs = new Set()
   for (const project of state.projects) if (project.worktree && project.worktree !== "/") dirs.add(project.worktree)
+  if (state.home) dirs.add(state.home)
   const active = currentSession()
   if (active?.directory && active.directory !== "/") dirs.add(active.directory)
   const targets = dirs.size ? [...dirs] : [undefined]
@@ -1602,6 +1760,7 @@ async function loadStatuses() {
 }
 
 async function refreshSessions() {
+  const seenAtStart = new Set(state.sessions.keys())
   const next = new Map()
   let api = false
   let projects = []
@@ -1612,6 +1771,15 @@ async function refreshSessions() {
     if (err.offline || err.status === 401) renderFooter()
   }
   state.projects = projects
+  if (state.home && !projects.some((project) => isHomeDir(project.worktree))) {
+    try {
+      const listed = await getJSON("/session", state.home)
+      if (Array.isArray(listed)) {
+        api = true
+        for (const session of listed) if (session?.id) next.set(session.id, normalizeApi(session))
+      }
+    } catch { /* home has no sessions yet */ }
+  }
   if (projects.length) {
     const results = await Promise.allSettled(projects.map((project) => getJSON("/session", project.worktree)))
     for (const result of results) {
@@ -1639,12 +1807,16 @@ async function refreshSessions() {
       for (const row of rows) mergeDb(next, row)
     }
   } catch { /* 404/501: stay on the API list */ }
+  for (const [id, session] of state.sessions) {
+    if (!seenAtStart.has(id) && !next.has(id)) next.set(id, session)
+  }
   if (state.activeId && !next.has(state.activeId) && state.sessions.has(state.activeId)) {
     next.set(state.activeId, state.sessions.get(state.activeId))
   }
   state.sessions = next
   state.apiAvailable = api
   state.dbAvailable = db
+  state.listed = true
   try { await loadStatuses() } catch { /* status is optional */ }
   renderProjectSelect()
   renderSidebar()
@@ -1710,6 +1882,7 @@ function removePermission(id) {
 async function loadPermissions() {
   const dirs = []
   for (const project of state.projects) dirs.push(project.worktree)
+  if (state.home && !dirs.some((dir) => isHomeDir(dir))) dirs.push(state.home)
   const pull = async (dir) => {
     try {
       const list = await getJSON("/permission", dir)
@@ -2290,16 +2463,121 @@ function thread() {
   return node
 }
 
+const HOME_SUGGESTIONS = [
+  { label: "Disk space", text: "How much disk space is free, and what is using the most?" },
+  { label: "Memory", text: "What is using the most memory right now?" },
+  { label: "Services", text: "Which services are running, and which of them failed?" },
+  { label: "Updates", text: "Are there system updates waiting to be installed?" },
+]
+
+function homeGreeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return "Good morning"
+  if (hour < 17) return "Good afternoon"
+  return "Good evening"
+}
+
+function renderHomeSuggest(fresh) {
+  const root = $("home-suggest")
+  const onHome = !currentSession() && Boolean(state.home)
+  root.hidden = !onHome
+  if (!onHome) return
+  if (!fresh && root.childElementCount) return
+  root.replaceChildren()
+  HOME_SUGGESTIONS.forEach((item, index) => {
+    const button = el("button", "home-chip", item.label)
+    button.type = "button"
+    button.style.animationDelay = `${0.22 + index * 0.06}s`
+    button.addEventListener("click", () => {
+      const input = $("input")
+      input.value = item.text
+      growInput()
+      input.focus()
+    })
+    root.append(button)
+  })
+}
+
+function paintSend(onHome) {
+  const send = $("send")
+  send.setAttribute("aria-label", "Send")
+  const mode = onHome ? "home" : "session"
+  if (send.dataset.mode === mode) return
+  send.dataset.mode = mode
+  if (!onHome) {
+    send.textContent = "Send"
+    return
+  }
+  const icon = svgIcon()
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
+  path.setAttribute("d", "M12 18V7M7.5 11.5 12 7l4.5 4.5")
+  icon.append(path)
+  send.replaceChildren(icon)
+}
+
+function thinkingNode() {
+  const row = el("div", "thinking")
+  row.setAttribute("role", "status")
+  row.setAttribute("aria-label", "Working")
+  const dots = el("span", "dots")
+  dots.append(el("i"), el("i"), el("i"))
+  row.append(dots, el("span", null, "Working"))
+  return row
+}
+
+function assistantHasText(message) {
+  return (message?.parts || []).some((part) => part?.type === "text" && String(part.text || "").trim())
+}
+
+function turnPending() {
+  if (state.starting) return true
+  const session = currentSession()
+  if (!session || !state.messages.length) return false
+  const last = state.messages[state.messages.length - 1]
+  const waiting = last?.info?.role !== "assistant" || !assistantHasText(last)
+  return waiting && (isBusy(session.id) || String(last?.info?.id || "").startsWith("pending:"))
+}
+
+function syncThinking(wrap) {
+  if (!wrap) return
+  wrap.querySelector(":scope > .thinking")?.remove()
+  if (turnPending()) wrap.append(thinkingNode())
+}
+
+function outgoingCard(text) {
+  const home = el("div", "home home-working")
+  const article = el("article", "msg msg-user")
+  article.append(el("p", "kicker", "You"))
+  const body = el("div", "user-body")
+  body.append(el("p", null, text))
+  article.append(body)
+  home.append(article, thinkingNode())
+  return home
+}
+
 function renderStream() {
   const root = $("stream")
-  if (!state.activeId) {
-    const empty = el("div", "empty-main")
-    empty.append(el("p", null, "Select a session."))
-    root.replaceChildren(empty)
+  if (!state.activeId && state.starting && state.outgoing) {
+    root.replaceChildren(outgoingCard(state.outgoing))
+  } else if (!state.activeId) {
+    if (state.home) {
+      if (!root.querySelector(".home")) {
+        const home = el("div", "home")
+        home.append(el("h2", null, homeGreeting()))
+        home.append(el("p", "mono", state.home))
+        root.replaceChildren(home)
+      }
+    } else {
+      const empty = el("div", "empty-main")
+      empty.append(el("p", null, "Select a session."))
+      root.replaceChildren(empty)
+    }
   } else if (state.unavailable) {
     const empty = el("div", "empty-main")
     empty.append(el("p", null, "This session's project isn't available to the server."))
     root.replaceChildren(empty)
+  } else if (state.loadingMessages && state.starting && state.outgoing) {
+    root.replaceChildren(outgoingCard(state.outgoing))
   } else if (state.loadingMessages) {
     const empty = el("div", "empty-main")
     empty.append(el("p", null, "Loading messages…"))
@@ -2311,6 +2589,7 @@ function renderStream() {
   } else {
     const wrap = el("div", "thread")
     for (const message of state.messages) wrap.append(renderMessageNode(message))
+    syncThinking(wrap)
     root.replaceChildren(wrap)
   }
   $("jump").hidden = state.stick || !state.activeId
@@ -2329,7 +2608,7 @@ function markDirty(id) {
 function flushDirty() {
   dirtyFrame = 0
   const root = $("stream")
-  if (!state.activeId || root.querySelector(".empty-main")) {
+  if (!state.activeId || root.querySelector(".empty-main") || root.querySelector(".home")) {
     dirty.clear()
     renderStream()
     return
@@ -2349,6 +2628,7 @@ function flushDirty() {
     else wrap.append(node)
   }
   dirty.clear()
+  syncThinking(wrap)
   if (stick) root.scrollTop = root.scrollHeight
   $("jump").hidden = stick || !state.activeId
 }
@@ -2622,6 +2902,7 @@ async function openEvent(path, directory, signal) {
 async function projectStreams(parent) {
   const dirs = new Set()
   for (const project of state.projects) if (project.worktree && project.worktree !== "/") dirs.add(project.worktree)
+  if (state.home) dirs.add(state.home)
   const active = currentSession()
   if (active?.directory && active.directory !== "/") dirs.add(active.directory)
   if (!dirs.size) throw new Error("no project event streams")
@@ -2735,6 +3016,10 @@ function setHash(id) {
 
 async function openSession(id) {
   if (!id) return
+  if ($("main").classList.contains("home-view")) {
+    $("input").value = ""
+    growInput()
+  }
   state.activeId = id
   state.unavailable = false
   state.stick = true
@@ -2743,6 +3028,7 @@ async function openSession(id) {
   const gen = state.loadGen
   setHash(id)
   if (state.bannerKind === "missing" || state.bannerKind === "session-error") clearBanner()
+  const pending = state.messages.filter((message) => String(message.info?.id || "").startsWith("pending:"))
   state.messages = []
   state.loadingMessages = true
   renderSidebar()
@@ -2776,6 +3062,9 @@ async function openSession(id) {
     const messages = await getJSON(`/session/${encodeURIComponent(id)}/message?limit=300`, directory)
     if (gen !== state.loadGen) return
     state.messages = Array.isArray(messages) ? messages : []
+    if (!state.messages.some((message) => message.info?.role === "user") && pending.length) {
+      state.messages = pending.concat(state.messages)
+    }
     sortMessages()
     state.loadingMessages = false
     state.unavailable = false
@@ -2829,9 +3118,13 @@ function renderQueue() {
 
 function renderComposer() {
   const session = currentSession()
-  const blocked = !session || state.unavailable
+  const onHome = !session && Boolean(state.home)
+  const blocked = state.unavailable || state.starting || (!session && !onHome)
   $("input").disabled = blocked
   $("send").disabled = blocked
+  $("input").placeholder = onHome ? "How can I help you today?" : "Message"
+  paintSend(onHome)
+  $("send").classList.toggle("is-wait", state.starting)
   const busy = session ? isBusy(session.id) : false
   $("stop").hidden = !busy
   renderQueue()
@@ -2882,9 +3175,10 @@ async function restoreReverted() {
   }
 }
 
-async function postPrompt(sessionId, text) {
+async function postPrompt(sessionId, text, directory) {
   const session = state.sessions.get(sessionId)
-  if (!session) return
+  const dir = session?.directory || directory || ""
+  if (!dir) throw new Error("Couldn't find that session.")
   const body = { parts: [{ type: "text", text }] }
   const model = splitModel(state.model)
   if (model) body.model = model
@@ -2899,14 +3193,18 @@ async function postPrompt(sessionId, text) {
     markDirty(pending.info.id)
   }
   try {
-    await request("POST", `/session/${encodeURIComponent(sessionId)}/prompt_async`, session.directory, body)
+    state.status.set(sessionId, { type: "busy" })
+    renderComposer()
+    await request("POST", `/session/${encodeURIComponent(sessionId)}/prompt_async`, dir, body)
   } catch (err) {
     if (sessionId === state.activeId) {
       for (const id of dropPending()) {
         $("stream").querySelector(`[data-id="${CSS.escape(id)}"]`)?.remove()
       }
     }
-    if (err.status === 400 && /busy/i.test(`${err.message} ${JSON.stringify(err.data || {})}`)) {
+    const queued = err.status === 400 && /busy/i.test(`${err.message} ${JSON.stringify(err.data || {})}`)
+    if (!queued && state.status.get(sessionId)?.type === "busy") state.status.set(sessionId, { type: "idle" })
+    if (queued) {
       state.queue.push({ sessionId, text })
       renderQueue()
       return
@@ -2935,9 +3233,40 @@ async function flushQueue(sessionId) {
 }
 
 async function sendCurrent() {
-  const session = currentSession()
   const text = $("input").value.trim()
-  if (!session || state.unavailable || !text) return
+  if (!text || state.unavailable || state.starting) return
+  const session = currentSession()
+  if (!session) {
+    if (!state.home) return
+    state.starting = true
+    state.outgoing = text
+    $("input").value = ""
+    growInput()
+    renderHeader()
+    renderStream()
+    try {
+      const created = await request("POST", "/session", state.home, {})
+      if (!created?.id) throw new Error("The server did not return a session.")
+      if (!created.directory) created.directory = state.home
+      applySessionInfo(created)
+      state.activeId = created.id
+      renderHeader()
+      renderStream()
+      await postPrompt(created.id, text, state.home)
+      await openSession(created.id)
+    } catch (err) {
+      $("input").value = text
+      growInput()
+      if (!err.offline) showBanner(err.message || "Couldn't send the message.")
+    } finally {
+      state.starting = false
+      state.outgoing = ""
+      renderHeader()
+      renderStream()
+      $("input").focus()
+    }
+    return
+  }
   $("input").value = ""
   growInput()
   if (isBusy(session.id)) {
@@ -2998,11 +3327,11 @@ async function createSession(directory) {
   if (!directory) directory = selectedProject()?.worktree || ""
   if (!directory && state.projectFilter === "all") {
     directory = await chooseProject()
-    if (!directory) return
+    if (!directory) return null
   }
   if (!directory || directory === "/") {
     showBanner("Choose a project before starting a session.")
-    return
+    return null
   }
   try {
     const created = await request("POST", "/session", directory, {})
@@ -3011,9 +3340,42 @@ async function createSession(directory) {
     applySessionInfo(created)
     await openSession(created.id)
     $("input").focus()
+    return created
   } catch (err) {
     if (!err.offline) showBanner(err.message || "Couldn't create a session.")
+    return null
   }
+}
+
+function showHome() {
+  $("input").value = ""
+  growInput()
+  state.activeId = null
+  state.unavailable = false
+  state.messages = []
+  state.loadingMessages = false
+  state.loadGen += 1
+  clearChanges()
+  if (location.hash && location.hash !== "#/") {
+    state.ignoreHash = true
+    location.hash = "#/"
+  }
+  if (state.bannerKind === "missing" || state.bannerKind === "session-error") clearBanner()
+  renderSidebar()
+  renderHeader()
+  renderStream()
+  renderPrompts()
+  if (state.home) $("input").focus()
+}
+
+async function loadHome() {
+  try {
+    const res = await fetch("/_home", { credentials: "same-origin" })
+    if (!res.ok) return
+    const data = await res.json()
+    const directory = cleanDir(data?.directory)
+    if (directory && directory !== "/") state.home = directory
+  } catch { /* the proxy route is missing */ }
 }
 
 function startRename() {
@@ -3421,6 +3783,7 @@ function bind() {
     searchTimer = setTimeout(() => searchDb(state.query.trim()), 250)
   })
   $("new-session").addEventListener("click", createSession)
+  $("home-btn").addEventListener("click", showHome)
   $("menu").addEventListener("click", () => {
     if (sidebarNarrow()) {
       if ($("sidebar").classList.contains("open")) closeDrawer()
@@ -3541,12 +3904,14 @@ function bind() {
     }
     const id = sessionFromHash()
     if (id && id !== state.activeId) openSession(id)
+    else if (!id && state.activeId) showHome()
   })
 }
 
 async function main() {
   loadLocal()
   bind()
+  await loadHome()
   renderProjectSelect()
   renderPickers()
   renderHeader()

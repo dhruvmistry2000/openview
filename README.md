@@ -98,6 +98,10 @@ API rows win over database rows when both exist. A database session whose projec
 
 The header project menu defaults to **All projects**. That view lists the eight newest sessions under Recents, then each project from most sessions to fewest, with that project's sessions underneath. **+** on a project starts a session there. Choosing one project limits the sidebar to it. **New session** creates the session in the chosen project, and in All projects it asks which project to use.
 
+## Home
+
+With no session open, the page is Home: a greeting, a message box in the middle, and a few system-task suggestions. A suggestion fills the box. Sending starts a session in the home folder of the machine running the proxy (`GET /_home`) and sends that first message. While that happens the page shows your message and a working animation, and the same animation stays under the transcript until a reply begins. The greeting and the box fade in only on this page. **Home** in the header returns there. **+** on Home in the sidebar starts an empty session there. Those sessions stay listed under Home, and the project menu leaves that folder out. Recents can still include them. Inside Docker, this is the container user's home, not the host's.
+
 ## Real-time
 
 The client prefers `GET /global/event`, one server-sent stream for every project (`{directory, payload}`). If that route is missing it opens `GET /event?directory=` per project. Streams use `fetch` and a `ReadableStream`, so auth headers work. A dropped stream reconnects after 2 seconds and reloads sessions and the open transcript.
