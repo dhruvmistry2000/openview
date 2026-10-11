@@ -126,6 +126,10 @@ Saving replaces an existing file only after you confirm. Names cannot contain pa
 
 When the proxy runs in Docker it cannot see your config directory, so a global save returns the markdown to copy onto the host. A project save works only when that project directory exists inside the container.
 
+### Appearance
+
+**Settings → Theme** chooses the look. **System** follows this device. **Light** and **Dark** are Openview’s own colors. The rest are the usual palettes: Catppuccin Latte, Frappé, Macchiato, and Mocha, plus Nord, Dracula, Gruvbox, Tokyo Night, Rosé Pine, Solarized, and One Dark. The choice is remembered in this browser.
+
 ### Self-hosted model
 
 **Settings** has a form for a model that runs on your own server. Ollama, LM Studio, and vLLM fill in the usual address. Any other OpenAI-compatible server needs a short provider id, such as `local`.

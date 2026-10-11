@@ -1,4 +1,50 @@
 // Event wiring and startup.
+const THEMES = [
+  "system", "light", "dark", "nord",
+  "catppuccin-latte", "catppuccin-frappe", "catppuccin-macchiato", "catppuccin-mocha",
+  "dracula", "gruvbox", "gruvbox-light", "tokyonight",
+  "rose-pine", "rose-pine-dawn", "solarized", "solarized-light", "one-dark",
+]
+const THEME_COLOR = {
+  light: "#F3F4F6",
+  dark: "#14161A",
+  nord: "#2E3440",
+  "catppuccin-latte": "#EFF1F5",
+  "catppuccin-frappe": "#303446",
+  "catppuccin-macchiato": "#24273A",
+  "catppuccin-mocha": "#1E1E2E",
+  dracula: "#282A36",
+  gruvbox: "#282828",
+  "gruvbox-light": "#FBF1C7",
+  tokyonight: "#1A1B26",
+  "rose-pine": "#191724",
+  "rose-pine-dawn": "#FAF4ED",
+  solarized: "#002B36",
+  "solarized-light": "#FDF6E3",
+  "one-dark": "#282C34",
+}
+
+function savedTheme() {
+  const theme = localStorage.getItem("oc-ui-theme") || "system"
+  return THEMES.includes(theme) ? theme : "system"
+}
+
+function paintThemeColor(theme) {
+  const dark = window.matchMedia("(prefers-color-scheme: dark)").matches
+  const color = theme === "system" ? (dark ? THEME_COLOR.dark : THEME_COLOR.light) : THEME_COLOR[theme]
+  for (const meta of document.querySelectorAll('meta[name="theme-color"]')) meta.content = color
+}
+
+function applyTheme(theme) {
+  if (!THEMES.includes(theme)) theme = "system"
+  if (theme === "system") delete document.documentElement.dataset.theme
+  else document.documentElement.dataset.theme = theme
+  localStorage.setItem("oc-ui-theme", theme)
+  paintThemeColor(theme)
+  const select = $("theme")
+  if (select && select.value !== theme) select.value = theme
+}
+
 function bind() {
   $("project").addEventListener("change", () => {
     state.projectFilter = $("project").value || "all"
@@ -73,6 +119,11 @@ function bind() {
   $("library-form").addEventListener("submit", saveLibrary)
   $("revert-restore").addEventListener("click", restoreReverted)
   $("settings-btn").addEventListener("click", openSettings)
+  $("theme").addEventListener("change", () => applyTheme($("theme").value))
+  applyTheme(savedTheme())
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    if (savedTheme() === "system") paintThemeColor("system")
+  })
   $("hosted-preset").addEventListener("change", syncHostedPreset)
   $("hosted-form").addEventListener("submit", saveHosted)
   $("settings-dialog").addEventListener("close", () => {

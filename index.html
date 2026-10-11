@@ -6,6 +6,13 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F3F4F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14161A" media="(prefers-color-scheme: dark)">
+<script>
+try {
+  var savedTheme = localStorage.getItem("oc-ui-theme")
+  var knownThemes = ["light","dark","nord","catppuccin-latte","catppuccin-frappe","catppuccin-macchiato","catppuccin-mocha","dracula","gruvbox","gruvbox-light","tokyonight","rose-pine","rose-pine-dawn","solarized","solarized-light","one-dark"]
+  if (knownThemes.indexOf(savedTheme) !== -1) document.documentElement.dataset.theme = savedTheme
+} catch (e) {}
+</script>
 <title>Openview</title>
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -95,6 +102,34 @@
 </div>
 
 <dialog id="settings-dialog">
+  <div id="appearance">
+    <h2>Appearance</h2>
+    <label>Theme
+      <select id="theme" class="field">
+        <option value="system">System</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <optgroup label="Catppuccin">
+          <option value="catppuccin-latte">Latte</option>
+          <option value="catppuccin-frappe">Frappé</option>
+          <option value="catppuccin-macchiato">Macchiato</option>
+          <option value="catppuccin-mocha">Mocha</option>
+        </optgroup>
+        <optgroup label="More">
+          <option value="nord">Nord</option>
+          <option value="dracula">Dracula</option>
+          <option value="gruvbox">Gruvbox</option>
+          <option value="gruvbox-light">Gruvbox Light</option>
+          <option value="tokyonight">Tokyo Night</option>
+          <option value="rose-pine">Rosé Pine</option>
+          <option value="rose-pine-dawn">Rosé Pine Dawn</option>
+          <option value="solarized">Solarized</option>
+          <option value="solarized-light">Solarized Light</option>
+          <option value="one-dark">One Dark</option>
+        </optgroup>
+      </select>
+    </label>
+  </div>
   <form method="dialog" id="connection-form">
     <h2>Connection</h2>
     <p>Leave the server URL empty to use this proxy. A URL is only for talking to OpenCode directly from the browser, which also needs <span class="mono">opencode serve --cors</span>.</p>
