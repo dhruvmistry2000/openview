@@ -1028,6 +1028,8 @@
     #changes { right: 0; width: 340px; box-shadow: -12px 0 40px var(--shadow); }
     #app.sidebar-collapsed #sidebar { transform: translateX(-100%); box-shadow: none; }
     #app.changes-collapsed #changes { transform: translateX(100%); box-shadow: none; }
+    #app:not(.sidebar-collapsed) #main { padding-left: 312px; }
+    #app:not(.changes-collapsed) #main:has(+ #changes:not([hidden])) { padding-right: 340px; }
   }
   @media (max-width: 760px) {
     #app.sidebar-collapsed #sidebar,
