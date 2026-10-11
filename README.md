@@ -216,6 +216,10 @@ Live updates prefer `GET /global/event`, one server-sent stream for every projec
 
 `GET /_home` on the proxy returns the home directory used by the Home page. It refuses the filesystem root.
 
+## Checks
+
+GitHub Actions runs **Check** on every push and pull request. It syntax-checks the page and the proxy, then starts the proxy and requests the page, the stylesheet, the client script, and `/_home`. It does not start OpenCode.
+
 ## Limits
 
 - Child sessions and archived sessions are hidden.

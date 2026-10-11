@@ -1,0 +1,60 @@
+name: Check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  syntax:
+    name: Syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript
+        run: |
+          set -euo pipefail
+          node --check server.mjs
+          find js lib -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -n1 node --check
+
+  proxy:
+    name: Proxy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Serve the page
+        run: |
+          set -euo pipefail
+          HOST=127.0.0.1 PORT=8091 node server.mjs > /tmp/openview.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" >/dev/null 2>&1 || true' EXIT
+          ready=0
+          for _ in $(seq 1 25); do
+            if curl -fsS http://127.0.0.1:8091/ >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 0.2
+          done
+          if [ "$ready" != 1 ]; then
+            cat /tmp/openview.log
+            exit 1
+          fi
+          curl -fsS http://127.0.0.1:8091/ | grep -q '<title>Openview</title>'
+          curl -fsS -D - -o /dev/null http://127.0.0.1:8091/css/app.css | grep -qi 'content-type: text/css'
+          curl -fsS -o /dev/null http://127.0.0.1:8091/js/main.js
+          curl -fsS http://127.0.0.1:8091/_home | grep -q '"directory"'
