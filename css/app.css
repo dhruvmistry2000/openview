@@ -238,7 +238,8 @@
     padding-bottom: 8px;
   }
   #top label { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; color: var(--ink-soft); font-size: 12px; }
-  #project { max-width: 260px; }
+  #top #project { flex: 0 1 260px; width: 260px; max-width: 100%; }
+  #new-project-btn { flex: none; width: auto; white-space: nowrap; }
   #menu { display: inline-flex; }
   button.icon-btn {
     display: inline-flex;
@@ -647,6 +648,26 @@
   .hosted-row label.check { margin: 0; flex: none; }
   .hosted-row button { flex: none; font-size: 12px; padding: 2px 8px; }
   #hosted-list { max-height: 140px; }
+  #project-dialog {
+    width: min(480px, calc(100vw - 28px));
+    max-height: calc(100dvh - 32px);
+    overflow: auto;
+  }
+  #project-mode { margin: 0 0 12px; }
+  .folder-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  #folder-path { margin: 0; min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #folder-list { max-height: 220px; }
+  .folder-row {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    padding: 6px 8px;
+    color: var(--ink);
+  }
+  .folder-row:hover { background: var(--fill); }
   #hosted-result.warn { color: var(--danger); }
   #library-dialog {
     width: min(460px, calc(100vw - 32px));
@@ -778,7 +799,7 @@
     }
     #changes.open { transform: none; box-shadow: -12px 0 40px var(--shadow); }
     #scrim.show { display: block; position: fixed; inset: 0; background: rgba(16, 20, 24, 0.42); z-index: 15; }
-    #project { max-width: none; }
+    #top #project { width: auto; flex: 1 1 140px; max-width: none; }
     input, select, textarea { font-size: 16px; }
     #stream { padding-left: 14px; padding-right: 14px; }
     #session-bar, #revert-bar, #prompts, #banner { width: min(760px, calc(100% - 28px)); }

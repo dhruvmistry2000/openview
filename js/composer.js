@@ -304,12 +304,95 @@ function growInput() {
   input.style.height = `${Math.min(input.scrollHeight, 200)}px`
 }
 
+let folderPath = ""
+let folderMode = true
+
+function parentDir(dir) {
+  const clean = cleanDir(dir)
+  if (!clean || clean === "/") return ""
+  const index = clean.lastIndexOf("/")
+  if (index <= 0) return "/"
+  return clean.slice(0, index)
+}
+
+function folderNote(text) {
+  const note = $("folder-note")
+  note.hidden = !text
+  note.textContent = text || ""
+}
+
+function showFolderBrowser() {
+  $("folder-browser").hidden = !folderMode
+  $("known-project").hidden = folderMode
+  $("mode-folder").setAttribute("aria-selected", folderMode ? "true" : "false")
+  $("mode-known").setAttribute("aria-selected", folderMode ? "false" : "true")
+  if (!folderMode) folderNote("")
+}
+
+async function loadFolder(directory) {
+  const dir = cleanDir(directory) || "/"
+  if (dir !== "/" && !dir.startsWith("/")) return
+  folderPath = dir
+  $("folder-path").textContent = dir
+  $("folder-path").title = dir
+  $("folder-up").disabled = !parentDir(dir)
+  folderNote("")
+  const list = $("folder-list")
+  list.replaceChildren(el("div", "lib-row", "Loading folders…"))
+  try {
+    const listed = await getJSON(`/file?path=${encodeURIComponent(dir)}`, dir)
+    if (folderPath !== dir) return
+    const dirs = (Array.isArray(listed) ? listed : [])
+      .filter((item) => item && item.type === "directory" && typeof item.absolute === "string" && item.absolute.startsWith("/") && !item.absolute.includes("\0") && item.absolute !== "/")
+      .sort((a, b) => a.name.localeCompare(b.name))
+    list.replaceChildren()
+    if (!dirs.length) {
+      list.append(el("div", "lib-row", "No folders in here. Create uses this folder."))
+      return
+    }
+    for (const item of dirs) {
+      const row = el("button", "folder-row", item.name)
+      row.type = "button"
+      row.title = item.absolute
+      row.addEventListener("click", () => loadFolder(item.absolute))
+      list.append(row)
+    }
+  } catch (err) {
+    if (folderPath !== dir) return
+    list.replaceChildren(el("div", "lib-row", err.message || "Could not open that folder."))
+  }
+}
+
+function bindFolderBrowser() {
+  $("mode-folder").addEventListener("click", () => {
+    folderMode = true
+    showFolderBrowser()
+    if (!folderPath) loadFolder(state.home)
+  })
+  $("mode-known").addEventListener("click", () => {
+    folderMode = false
+    showFolderBrowser()
+  })
+  $("folder-up").addEventListener("click", () => {
+    const parent = parentDir(folderPath)
+    if (parent) loadFolder(parent)
+  })
+  $("project-form").addEventListener("submit", (event) => {
+    if (event.submitter?.value !== "ok") return
+    if (folderMode) {
+      if (folderPath && folderPath !== "/") return
+      event.preventDefault()
+      folderNote(folderPath === "/" ? "Choose a folder inside this one." : "Open a folder first.")
+      return
+    }
+    if ($("new-project").value) return
+    event.preventDefault()
+    folderNote("Choose a project.")
+  })
+}
+
 function chooseProject() {
   const projects = projectOptions()
-  if (!projects.length) {
-    showBanner("No projects are available yet. Open a directory with OpenCode first.")
-    return Promise.resolve(null)
-  }
   const dialog = $("project-dialog")
   const select = $("new-project")
   select.replaceChildren()
@@ -318,19 +401,28 @@ function chooseProject() {
     node.title = project.worktree
     select.append(node)
   }
+  const current = selectedProject()?.worktree || ""
+  select.value = [...select.options].some((item) => item.value === current) ? current : (projects[0]?.worktree || "")
+  folderMode = true
+  folderPath = ""
+  showFolderBrowser()
+  loadFolder(state.home)
   dialog.returnValue = ""
   dialog.showModal()
   return new Promise((resolve) => {
     dialog.addEventListener("close", () => {
-      resolve(dialog.returnValue === "ok" ? select.value : null)
+      if (dialog.returnValue !== "ok") {
+        resolve(null)
+        return
+      }
+      resolve(folderMode ? folderPath : select.value)
     }, { once: true })
   })
 }
 
 async function createSession(directory) {
   if (typeof directory !== "string") directory = ""
-  if (!directory) directory = selectedProject()?.worktree || ""
-  if (!directory && state.projectFilter === "all") {
+  if (!directory) {
     directory = await chooseProject()
     if (!directory) return null
   }
@@ -344,6 +436,7 @@ async function createSession(directory) {
     if (!created.directory) created.directory = directory
     applySessionInfo(created)
     await openSession(created.id)
+    refreshSessions()
     $("input").focus()
     return created
   } catch (err) {

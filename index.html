@@ -24,6 +24,7 @@
     </button>
     <label>Project
       <select id="project" aria-label="Project"></select>
+      <button id="new-project-btn" class="ghost" type="button">New project</button>
     </label>
     <button id="home-btn" type="button" hidden>Home</button>
     <button id="library-btn" type="button">Library</button>
@@ -216,10 +217,22 @@
 </dialog>
 
 <dialog id="project-dialog">
-  <form method="dialog">
-    <h2>New session</h2>
-    <p>Choose which project this session belongs to.</p>
-    <label>Project<select id="new-project"></select></label>
+  <form method="dialog" id="project-form">
+    <h2>New project</h2>
+    <p>Open a folder on this machine, or start in a project OpenCode already knows.</p>
+    <div class="seg" id="project-mode">
+      <button id="mode-folder" type="button" aria-selected="true">Different folder</button>
+      <button id="mode-known" type="button" aria-selected="false">Existing project</button>
+    </div>
+    <div id="folder-browser">
+      <div class="folder-bar">
+        <button id="folder-up" class="ghost" type="button">Up</button>
+        <p id="folder-path" class="path mono"></p>
+      </div>
+      <div id="folder-list" class="lib-list" role="list"></div>
+    </div>
+    <label id="known-project" hidden>Project<select id="new-project"></select></label>
+    <p id="folder-note" class="hint warn" hidden></p>
     <div class="composer-row">
       <button class="ghost" type="submit" value="cancel">Cancel</button>
       <button type="submit" value="ok">Create</button>

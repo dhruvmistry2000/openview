@@ -13,6 +13,8 @@ function bind() {
     searchTimer = setTimeout(() => searchDb(state.query.trim()), 250)
   })
   $("new-session").addEventListener("click", createSession)
+  $("new-project-btn").addEventListener("click", createSession)
+  bindFolderBrowser()
   $("home-btn").addEventListener("click", showHome)
   $("menu").addEventListener("click", () => {
     if (sidebarNarrow()) {

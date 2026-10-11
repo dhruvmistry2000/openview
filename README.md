@@ -83,7 +83,7 @@ The icon at the left of the header opens and closes the session list. That choic
 
 The chevron beside Home, Recents, or a project hides that list. Click the chevron or the name. The choice is remembered. **+** on Home or a project starts a session there.
 
-The search box filters titles. **New session** creates a session in the project chosen in the header. In All projects it asks which project to use.
+The search box filters titles. **New project** in the header, and **New session** in the sidebar, open a folder list. **Different folder** is already selected: click a folder to open it, and **Up** goes to the parent. **Create** starts the session in the path shown. **Existing project** uses a project OpenCode already knows. **+** on Home or a project still starts a session there without asking.
 
 Pick one project in the header to limit the sidebar to that project. Sessions are then grouped by Today, Yesterday, This week, and Older.
 
