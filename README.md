@@ -2,7 +2,7 @@
 
 Openview is a browser client for [OpenCode](https://opencode.ai). It lists sessions from every project and lets you read them, send messages, rename them, stop a running turn, undo a turn, and delete them. The same page works on a phone over your LAN or Tailscale.
 
-The browser page is `index.html`. Styles live in `css/app.css`, and the client is split across `js/` so each area is its own file. `server.mjs` is a small Node proxy: it serves those files and forwards everything else to `opencode serve`. The database reader is `lib/db.mjs`. The agent and skill writer is `lib/library.mjs`.
+The browser page is `index.html`. Styles live in `css/app.css`, and the client is split across `js/` so each area is its own file. `server.mjs` is a small Node proxy: it serves those files and forwards everything else to `opencode serve`. The database reader is `lib/db.mjs`. The agent and skill writer is `lib/library.mjs`. The self-hosted model writer is `lib/config.mjs`.
 
 ## Layout
 
@@ -14,6 +14,7 @@ The browser page is `index.html`. Styles live in `css/app.css`, and the client i
 | `server.mjs` | Proxy, static files, and the Home route |
 | `lib/db.mjs` | Read-only session database |
 | `lib/library.mjs` | Writes an agent or skill file |
+| `lib/config.mjs` | Self-hosted model entries in `opencode.jsonc` |
 
 ![Home page, with the session list and changes panel closed](docs/home.png)
 
@@ -119,9 +120,21 @@ A folder that is not a git checkout only shows files touched in the session. The
 
 The name is lowercase words with single hyphens. For a skill, that name is also the folder name. A primary agent appears in the agent menu. A subagent is one another agent can call. The file body is the agent prompt, or the skill instructions. The description is what the model sees when deciding whether to load a skill.
 
+**Skill** in the message box runs a skill OpenCode has already loaded. **No skill** sends a normal message. The text you type is the instruction for that skill, and the agent and model menus still apply. A skill saved from Library shows up in that menu after you restart OpenCode and reload this page.
+
 Saving replaces an existing file only after you confirm. Names cannot contain path separators. The proxy will not write into `/` or your home directory, and it will not follow a symlink out of the destination folder.
 
 When the proxy runs in Docker it cannot see your config directory, so a global save returns the markdown to copy onto the host. A project save works only when that project directory exists inside the container.
+
+### Self-hosted model
+
+**Settings** has a form for a model that runs on your own server. Ollama, LM Studio, and vLLM fill in the usual address. Any other OpenAI-compatible server needs a short provider id, such as `local`.
+
+The model id is the name your server expects. **Use as the default model** writes `model` in `opencode.jsonc`. **Use for short tasks** writes `small_model`, which OpenCode uses for work such as session titles. A model already in the file has the same two checkboxes in the list above the form. **Remove** deletes that model. If it was the default or the short-task model, those lines go with it. Other models stay.
+
+The address, display name, menu name, and an optional API key are stored on that provider. Leave the key empty when the server does not ask for one. **This model can use tools** stays on unless the model has no tool calling. Context tokens and max output tokens are optional, and they are saved together. **Default agent** can be `build` or `plan`.
+
+Saving keeps every other setting in the file, including permissions. A file that contains comments is left untouched. Restart OpenCode, then reload Openview, before the new model appears in the menu. Inside Docker the form explains that the file has to be edited on the host.
 
 ## Phone, LAN, and Tailscale
 

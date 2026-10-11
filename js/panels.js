@@ -5,6 +5,7 @@ function openSettings() {
   $("set-pass").value = state.settings.password
   const dialog = $("settings-dialog")
   if (!dialog.open) dialog.showModal()
+  loadHosted()
 }
 
 function sidebarNarrow() {

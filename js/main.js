@@ -71,6 +71,8 @@ function bind() {
   $("library-form").addEventListener("submit", saveLibrary)
   $("revert-restore").addEventListener("click", restoreReverted)
   $("settings-btn").addEventListener("click", openSettings)
+  $("hosted-preset").addEventListener("change", syncHostedPreset)
+  $("hosted-form").addEventListener("submit", saveHosted)
   $("settings-dialog").addEventListener("close", () => {
     if ($("settings-dialog").returnValue !== "save") return
     state.settings = {
@@ -95,6 +97,11 @@ function bind() {
   $("model").addEventListener("change", () => {
     state.model = $("model").value
     localStorage.setItem("oc-ui-model", state.model)
+  })
+  $("skill").addEventListener("change", () => {
+    state.skill = $("skill").value
+    localStorage.setItem("oc-ui-skill", state.skill)
+    renderComposer()
   })
   $("composer").addEventListener("submit", (event) => {
     event.preventDefault()

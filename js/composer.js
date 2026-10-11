@@ -99,7 +99,8 @@ function renderQueue() {
   const mine = state.queue.filter((item) => item.sessionId === state.activeId)
   mine.forEach((item, index) => {
     const row = el("div", "queue-item")
-    row.append(el("span", null, `Queued: ${item.text}`))
+    const label = item.skill ? `Queued ${item.skill}: ${item.text}` : `Queued: ${item.text}`
+    row.append(el("span", null, label))
     const remove = el("button", "text-btn", "Remove")
     remove.type = "button"
     remove.addEventListener("click", () => {
@@ -119,7 +120,9 @@ function renderComposer() {
   const blocked = state.unavailable || state.starting || (!session && !onHome)
   $("input").disabled = blocked
   $("send").disabled = blocked
-  $("input").placeholder = onHome ? "How can I help you today?" : "Message"
+  $("input").placeholder = state.skill
+    ? `What should ${state.skill} do?`
+    : (onHome ? "How can I help you today?" : "Message")
   paintSend(onHome)
   $("send").classList.toggle("is-wait", state.starting)
   const busy = session ? isBusy(session.id) : false
@@ -172,13 +175,15 @@ async function restoreReverted() {
   }
 }
 
-async function postPrompt(sessionId, text, directory) {
+async function postPrompt(sessionId, text, directory, skill = state.skill) {
   const session = state.sessions.get(sessionId)
   const dir = session?.directory || directory || ""
   if (!dir) throw new Error("Couldn't find that session.")
-  const body = { parts: [{ type: "text", text }] }
   const model = splitModel(state.model)
-  if (model) body.model = model
+  const body = skill
+    ? { command: skill, arguments: text }
+    : { parts: [{ type: "text", text }] }
+  if (model) body.model = skill ? `${model.providerID}/${model.modelID}` : model
   if (state.agent) body.agent = state.agent
   if (sessionId === state.activeId) {
     const pending = {
@@ -192,7 +197,10 @@ async function postPrompt(sessionId, text, directory) {
   try {
     state.status.set(sessionId, { type: "busy" })
     renderComposer()
-    await request("POST", `/session/${encodeURIComponent(sessionId)}/prompt_async`, dir, body)
+    const path = skill
+      ? `/session/${encodeURIComponent(sessionId)}/command`
+      : `/session/${encodeURIComponent(sessionId)}/prompt_async`
+    await request("POST", path, dir, body)
   } catch (err) {
     if (sessionId === state.activeId) {
       for (const id of dropPending()) {
@@ -219,7 +227,7 @@ async function flushQueue(sessionId) {
   state.queue = state.queue.filter((entry) => entry !== item)
   renderQueue()
   try {
-    await postPrompt(sessionId, item.text)
+    await postPrompt(sessionId, item.text, undefined, item.skill || "")
   } catch (err) {
     state.queue.unshift(item)
     renderQueue()
@@ -249,7 +257,7 @@ async function sendCurrent() {
       state.activeId = created.id
       renderHeader()
       renderStream()
-      await postPrompt(created.id, text, state.home)
+      await postPrompt(created.id, text, state.home, state.skill)
       await openSession(created.id)
     } catch (err) {
       $("input").value = text
@@ -267,7 +275,7 @@ async function sendCurrent() {
   $("input").value = ""
   growInput()
   if (isBusy(session.id)) {
-    state.queue.push({ sessionId: session.id, text })
+    state.queue.push({ sessionId: session.id, text, skill: state.skill || "" })
     renderQueue()
     return
   }

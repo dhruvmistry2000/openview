@@ -66,18 +66,18 @@
   .side-head { padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
   .brand { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .brand strong { font-weight: 600; letter-spacing: -0.03em; }
-  #search, #project, #agent, #model, .rename-input, #set-url, #set-user, #set-pass, #new-project, .q-custom, .field {
+  #search, #project, #agent, #model, #skill, .rename-input, #set-url, #set-user, #set-pass, #new-project, .q-custom, .field {
     width: 100%;
     background: var(--fill);
     border: 1px solid transparent;
     border-radius: 9px;
     padding: 8px 10px;
   }
-  #search:hover, #project:hover, #agent:hover, #model:hover,
+  #search:hover, #project:hover, #agent:hover, #model:hover, #skill:hover,
   .rename-input:hover, #set-url:hover, #set-user:hover, #set-pass:hover, #new-project:hover, .q-custom:hover, .field:hover {
     border-color: var(--line);
   }
-  #search:focus, #project:focus, #agent:focus, #model:focus,
+  #search:focus, #project:focus, #agent:focus, #model:focus, #skill:focus,
   .rename-input:focus, #set-url:focus, #set-user:focus, #set-pass:focus, #new-project:focus, .q-custom:focus, .field:focus {
     background: var(--paper);
     border-color: color-mix(in srgb, var(--cobalt) 40%, var(--line));
@@ -594,8 +594,9 @@
     background: transparent;
     padding: 6px 4px 2px;
   }
-  #agent, #model { width: auto; max-width: 100%; background: transparent; }
-  #model { flex: 1; min-width: 160px; }
+  #agent, #model, #skill { width: auto; max-width: 100%; background: transparent; }
+  #model { flex: 1; min-width: 140px; }
+  #skill { max-width: 220px; }
   #send {
     background: var(--ink);
     color: var(--paper);
@@ -620,6 +621,33 @@
   dialog p { margin: 0 0 12px; color: var(--ink-soft); font-size: 14px; }
   dialog label { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; font-size: 13px; color: var(--ink-soft); }
   dialog .composer-row { justify-content: flex-end; }
+  #settings-dialog {
+    width: min(480px, calc(100vw - 28px));
+    max-height: calc(100dvh - 32px);
+    overflow: auto;
+  }
+  .settings-block {
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+  dialog label.check {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  dialog label.check input { width: auto; margin: 0; }
+  .hosted-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+  }
+  .hosted-row > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hosted-row label.check { margin: 0; flex: none; }
+  .hosted-row button { flex: none; font-size: 12px; padding: 2px 8px; }
+  #hosted-list { max-height: 140px; }
+  #hosted-result.warn { color: var(--danger); }
   #library-dialog {
     width: min(460px, calc(100vw - 32px));
     max-height: calc(100dvh - 32px);

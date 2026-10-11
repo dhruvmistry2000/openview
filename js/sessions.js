@@ -17,6 +17,7 @@ function loadLocal() {
   }
   state.agent = localStorage.getItem("oc-ui-agent") || "build"
   state.model = localStorage.getItem("oc-ui-model") || "opencode\u001fbig-pickle"
+  state.skill = localStorage.getItem("oc-ui-skill") || ""
   try {
     const folded = JSON.parse(localStorage.getItem("oc-ui-folded") || "[]")
     state.folded = new Set(Array.isArray(folded) ? folded.filter((item) => typeof item === "string") : [])

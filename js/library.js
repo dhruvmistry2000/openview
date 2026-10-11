@@ -19,7 +19,9 @@ function syncLibraryForm() {
   $("lib-tab-agent").setAttribute("aria-selected", String(!skill))
   $("lib-tab-skill").setAttribute("aria-selected", String(skill))
   $("lib-mode-wrap").hidden = skill
-  $("lib-body").placeholder = skill ? "Steps to follow once this skill is loaded." : "How this agent should work."
+  $("lib-body").placeholder = skill
+    ? "Steps to follow. After OpenCode restarts, choose this name in the Skill menu."
+    : "How this agent should work."
   $("lib-project-wrap").hidden = $("lib-scope").value === "global"
   const name = $("lib-name").value.trim()
   const path = $("lib-path")

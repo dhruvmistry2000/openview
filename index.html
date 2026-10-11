@@ -73,6 +73,7 @@
       <div class="composer-row">
         <select id="agent" aria-label="Agent"></select>
         <select id="model" aria-label="Model"></select>
+        <select id="skill" aria-label="Skill"></select>
         <button id="stop" type="button" hidden>Stop</button>
         <button id="send" type="submit">Send</button>
       </div>
@@ -93,7 +94,7 @@
 </div>
 
 <dialog id="settings-dialog">
-  <form method="dialog">
+  <form method="dialog" id="connection-form">
     <h2>Connection</h2>
     <p>Leave the server URL empty to use this proxy. A URL is only for talking to OpenCode directly from the browser, which also needs <span class="mono">opencode serve --cors</span>.</p>
     <label>Server URL<input id="set-url" type="url" placeholder="http://127.0.0.1:4096" autocomplete="off"></label>
@@ -104,6 +105,65 @@
       <button id="set-save" type="submit" value="save">Save</button>
     </div>
   </form>
+  <div class="settings-block">
+    <h2>Self-hosted model</h2>
+    <p id="hosted-note">Add a model that runs on your own server. The default checkbox writes it into OpenCode’s config.</p>
+    <div id="hosted-list" class="lib-list" hidden></div>
+    <form id="hosted-form">
+      <label>Server
+        <select id="hosted-preset" class="field">
+          <option value="ollama">Ollama</option>
+          <option value="lmstudio">LM Studio</option>
+          <option value="vllm">vLLM</option>
+          <option value="other">Other OpenAI-compatible server</option>
+        </select>
+      </label>
+      <div class="lib-pair">
+        <label id="hosted-id-wrap" hidden>Provider id
+          <input id="hosted-id" class="field" autocomplete="off" spellcheck="false" placeholder="local">
+        </label>
+        <label>Display name
+          <input id="hosted-name" class="field" autocomplete="off" placeholder="Ollama">
+        </label>
+      </div>
+      <label>Address
+        <input id="hosted-url" class="field" type="url" autocomplete="off" spellcheck="false" placeholder="http://127.0.0.1:11434/v1">
+      </label>
+      <div class="lib-pair">
+        <label>Model id
+          <input id="hosted-model" class="field" autocomplete="off" spellcheck="false" placeholder="qwen2.5-coder">
+        </label>
+        <label>Name in the menu
+          <input id="hosted-label" class="field" autocomplete="off" placeholder="Qwen 2.5 Coder">
+        </label>
+      </div>
+      <label>API key
+        <input id="hosted-key" class="field" type="password" autocomplete="off" placeholder="Only if the server asks for one">
+      </label>
+      <label class="check"><input id="hosted-default" type="checkbox"> Use as the default model</label>
+      <label class="check"><input id="hosted-small" type="checkbox"> Use for short tasks, such as session titles</label>
+      <label class="check"><input id="hosted-tools" type="checkbox" checked> This model can use tools</label>
+      <div class="lib-pair">
+        <label>Context tokens
+          <input id="hosted-context" class="field" inputmode="numeric" autocomplete="off" placeholder="Optional">
+        </label>
+        <label>Max output tokens
+          <input id="hosted-output" class="field" inputmode="numeric" autocomplete="off" placeholder="Optional">
+        </label>
+      </div>
+      <label>Default agent
+        <select id="hosted-agent" class="field">
+          <option value="">Leave unchanged</option>
+          <option value="build">build</option>
+          <option value="plan">plan</option>
+        </select>
+      </label>
+      <p id="hosted-result" hidden></p>
+      <div class="composer-row">
+        <button type="submit">Save model</button>
+      </div>
+    </form>
+  </div>
 </dialog>
 
 <dialog id="library-dialog">
@@ -178,6 +238,7 @@
 <script src="/js/transcript.js"></script>
 <script src="/js/events.js"></script>
 <script src="/js/composer.js"></script>
+<script src="/js/settings.js"></script>
 <script src="/js/panels.js"></script>
 <script src="/js/library.js"></script>
 <script src="/js/main.js"></script>

@@ -2,6 +2,7 @@
 function renderPickers() {
   const agent = $("agent")
   const model = $("model")
+  const skill = $("skill")
   agent.replaceChildren(option("", "Default agent"))
   for (const item of state.agents) agent.append(option(item.name, item.name))
   agent.value = [...agent.options].some((item) => item.value === state.agent) ? state.agent : ""
@@ -13,6 +14,13 @@ function renderPickers() {
     model.append(option(state.model, state.model.replace("\u001f", " / ")))
   }
   model.value = [...model.options].some((item) => item.value === state.model) ? state.model : ""
+  skill.replaceChildren(option("", "No skill"))
+  for (const item of state.skills) {
+    const node = option(item.name, item.name)
+    if (item.description) node.title = item.description
+    skill.append(node)
+  }
+  skill.value = [...skill.options].some((item) => item.value === state.skill) ? state.skill : ""
 }
 
 function settlePickerChoice() {
@@ -27,6 +35,10 @@ function settlePickerChoice() {
     state.model = ids.includes(preferred) ? preferred : ""
     localStorage.setItem("oc-ui-model", state.model)
   }
+  if (state.skills.length && state.skill && !state.skills.some((item) => item.name === state.skill)) {
+    state.skill = ""
+    localStorage.setItem("oc-ui-skill", "")
+  }
 }
 
 function pickerDirectory() {
@@ -39,12 +51,13 @@ function pickerDirectory() {
 
 async function loadPickers(directory) {
   const dir = directory || pickerDirectory()
-  if (dir && dir === state.pickerDir && (state.agents.length || state.models.length)) return
+  if (dir && dir === state.pickerDir && (state.agents.length || state.models.length || state.skills.length)) return
   const gen = state.pickerGen + 1
   state.pickerGen = gen
   state.pickerDir = dir || null
   let agents = []
   let models = []
+  let skills = []
   try {
     const listed = await getJSON("/agent", dir || undefined)
     if (Array.isArray(listed)) {
@@ -66,11 +79,26 @@ async function loadPickers(directory) {
     }
     models.sort((a, b) => `${a.providerName} ${a.name}`.localeCompare(`${b.providerName} ${b.name}`))
   } catch { /* this folder has no model list */ }
+  try {
+    const listed = await getJSON("/command", dir || undefined)
+    if (Array.isArray(listed)) {
+      const seen = new Set()
+      for (const command of listed) {
+        if (command?.source !== "skill" || !command.name || seen.has(command.name)) continue
+        seen.add(command.name)
+        const description = String(command.description || "").replace(/\s+/g, " ").trim()
+        skills.push({ name: command.name, description: description.slice(0, 240) })
+      }
+      skills.sort((a, b) => a.name.localeCompare(b.name))
+    }
+  } catch { /* this folder has no skill list */ }
   if (gen !== state.pickerGen) return
   state.agents = agents
   state.models = models
+  state.skills = skills
   settlePickerChoice()
   renderPickers()
+  renderComposer()
 }
 
 async function loadStatuses() {

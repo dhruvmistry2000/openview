@@ -4,7 +4,8 @@
  * Serves index.html, css/, and js/, then forwards every other request to the
  * OpenCode HTTP server. GET /_home returns this machine's home directory.
  * GET /_db/sessions reads the local SQLite database read-only. POST /_library
- * writes one agent or skill markdown file.
+ * writes one agent or skill markdown file. GET and POST /_config read and
+ * update the self-hosted model entries in opencode.jsonc.
  *
  * Node 22+ is required for the database endpoint (node:sqlite). The proxy
  * itself runs on Node 18+.
@@ -18,6 +19,7 @@ import { createHash, timingSafeEqual } from "node:crypto"
 import { fileURLToPath } from "node:url"
 import { sendJson } from "./lib/respond.mjs"
 import { handleLibrary } from "./lib/library.mjs"
+import { handleConfig } from "./lib/config.mjs"
 import { handleDbSessions, inspectDatabase, loadSqlite, resolveDbPath } from "./lib/db.mjs"
 
 const OPENCODE_URL = process.env.OPENCODE_URL || "http://127.0.0.1:4096"
@@ -222,6 +224,10 @@ const server = http.createServer((req, res) => {
   }
   if (url.pathname === "/_library") {
     handleLibrary(req, res)
+    return
+  }
+  if (url.pathname === "/_config") {
+    handleConfig(req, res)
     return
   }
   if (req.method === "GET" || req.method === "HEAD") {
