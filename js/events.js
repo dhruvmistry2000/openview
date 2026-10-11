@@ -1,9 +1,13 @@
 // Server-sent events.
+let lastEventAt = Date.now()
+let lastDataAt = Date.now()
 function onEvent(packet) {
   const event = packet?.event
   if (!event?.type) return
-  const props = event.properties || {}
   const type = event.type
+  lastEventAt = Date.now()
+  if (type !== "server.heartbeat" && type !== "server.connected") lastDataAt = Date.now()
+  const props = event.properties || {}
   if (type === "server.connected") {
     state.conn = "live"
     renderFooter()
@@ -236,11 +240,73 @@ async function connectEvents() {
     renderFooter()
     await sleep(2000, signal)
     if (signal.aborted) return
+    await resync()
+  }
+}
+
+async function resync(opts = {}) {
+  try {
+    await refreshSessions()
+    if (opts.messages !== false && state.activeId && !state.unavailable) await reloadMessages()
+    await loadPermissions()
+    if (state.activeId) flushQueue(state.activeId)
+  } catch { /* the banner already explains an outage */ }
+}
+
+// The proxy watches the SQLite file and streams a `change` event when it moves.
+// That signal does not depend on OpenCode's event stream, so when the stream is
+// dead or silent we use it to reload the list and release a stuck queue.
+const DB_RECONCILE_MS = 2000
+const DB_STALE_MS = 20000
+let dbFeedAbort = null
+let dbFeedDirty = false
+let dbFeedAt = 0
+let dbReconcileTimer = null
+
+function onDbFeed(msg) {
+  if (!msg || msg.type !== "change") return
+  state.dbFeed = "live"
+  if (state.conn === "live" && Date.now() - lastDataAt < DB_STALE_MS) return
+  dbFeedDirty = true
+  if (dbReconcileTimer) return
+  const wait = Math.max(0, DB_RECONCILE_MS - (Date.now() - dbFeedAt))
+  dbReconcileTimer = setTimeout(reconcileFromDb, wait)
+}
+
+async function reconcileFromDb() {
+  dbReconcileTimer = null
+  if (!dbFeedDirty) return
+  dbFeedDirty = false
+  dbFeedAt = Date.now()
+  await resync({ messages: false })
+  if (dbFeedDirty && !dbReconcileTimer) dbReconcileTimer = setTimeout(reconcileFromDb, DB_RECONCILE_MS)
+}
+
+async function connectDbEvents() {
+  dbFeedAbort?.abort()
+  const ctrl = new AbortController()
+  dbFeedAbort = ctrl
+  while (!ctrl.signal.aborted) {
     try {
-      await refreshSessions()
-      if (state.activeId && !state.unavailable) await reloadMessages()
-      await loadPermissions()
-    } catch { /* the banner already explains an outage */ }
+      const res = await apiFetch("/_db/events", {
+        headers: { accept: "text/event-stream" },
+        signal: ctrl.signal,
+      })
+      if (res.status === 404 || res.status === 501) {
+        state.dbFeed = "off"
+        return
+      }
+      if (!res.ok || !res.body) throw Object.assign(new Error("db feed " + res.status), { status: res.status })
+      state.dbFeed = "live"
+      await pumpSse(res.body, onDbFeed, ctrl.signal)
+    } catch (err) {
+      if (ctrl.signal.aborted || err.name === "AbortError") return
+      state.dbFeed = state.offline ? "off" : "reconnecting"
+    }
+    if (ctrl.signal.aborted) return
+    await sleep(3000, ctrl.signal)
+    if (ctrl.signal.aborted) return
+    await resync({ messages: false })
   }
 }
 

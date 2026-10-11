@@ -210,9 +210,29 @@ async function main() {
   await refreshSessions()
   await Promise.allSettled([loadPickers(), loadPermissions(), loadQuestions()])
   connectEvents()
+  connectDbEvents()
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return
+    if (state.conn !== "live" || Date.now() - lastEventAt > 20000) connectEvents()
+    if (state.dbFeed !== "live") connectDbEvents()
+    resync()
+  })
+  window.addEventListener("online", () => {
+    connectEvents()
+    connectDbEvents()
+    resync()
+  })
   const deep = sessionFromHash()
   if (deep) await openSession(deep)
-  setInterval(() => { refreshSessions() }, 60000)
+  setInterval(() => {
+    if (state.conn === "live" && Date.now() - lastEventAt > 45000) {
+      connectEvents()
+      resync()
+    }
+  }, 10000)
+  setInterval(() => {
+    refreshSessions().then(() => { if (state.activeId) flushQueue(state.activeId) }).catch(() => {})
+  }, 60000)
   setInterval(() => { renderSidebar() }, 30000)
 }
 

@@ -23,6 +23,7 @@ const state = {
   apiAvailable: false,
   dbAvailable: false,
   conn: "connecting",
+  dbFeed: "off",
   offline: false,
   unavailable: false,
   loadingMessages: false,

@@ -3,7 +3,8 @@
  *
  * Serves index.html, css/, and js/, then forwards every other request to the
  * OpenCode HTTP server. GET /_home returns this machine's home directory.
- * GET /_db/sessions reads the local SQLite database read-only. POST /_library
+ * GET /_db/sessions reads the local SQLite database read-only. GET /_db/events
+ * streams a change event whenever that database file changes. POST /_library
  * writes one agent or skill markdown file. GET and POST /_config read and
  * update the self-hosted model entries in opencode.jsonc.
  *
@@ -21,6 +22,7 @@ import { sendJson } from "./lib/respond.mjs"
 import { handleLibrary } from "./lib/library.mjs"
 import { handleConfig } from "./lib/config.mjs"
 import { handleDbSessions, inspectDatabase, loadSqlite, resolveDbPath } from "./lib/db.mjs"
+import { handleDbEvents } from "./lib/dbfeed.mjs"
 
 const OPENCODE_URL = process.env.OPENCODE_URL || "http://127.0.0.1:4096"
 const HOST = process.env.HOST || "127.0.0.1"
@@ -220,6 +222,10 @@ const server = http.createServer((req, res) => {
   }
   if (req.method === "GET" && url.pathname === "/_db/sessions") {
     handleDbSessions(req, res)
+    return
+  }
+  if (req.method === "GET" && url.pathname === "/_db/events") {
+    handleDbEvents(req, res)
     return
   }
   if (url.pathname === "/_library") {

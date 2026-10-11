@@ -240,6 +240,24 @@ async function flushQueue(sessionId) {
   }
 }
 
+async function reconcileBusy(sessionId) {
+  const session = state.sessions.get(sessionId)
+  const before = isBusy(sessionId)
+  try {
+    const list = await getJSON("/session/status", session?.directory)
+    const status = list && typeof list === "object" && !Array.isArray(list) ? list[sessionId] : null
+    state.status.set(sessionId, status || { type: "idle" })
+  } catch {
+    return isBusy(sessionId)
+  }
+  const after = isBusy(sessionId)
+  if (before !== after) {
+    scheduleSidebar()
+    renderComposer()
+  }
+  return after
+}
+
 async function sendCurrent() {
   const text = $("input").value.trim()
   if (!text || state.unavailable || state.starting) return
@@ -277,7 +295,7 @@ async function sendCurrent() {
   }
   $("input").value = ""
   growInput()
-  if (isBusy(session.id)) {
+  if (await reconcileBusy(session.id)) {
     state.queue.push({ sessionId: session.id, text, skill: state.skill || "" })
     renderQueue()
     return

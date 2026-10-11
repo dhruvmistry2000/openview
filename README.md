@@ -206,13 +206,15 @@ Set `OPENCODE_SERVER_PASSWORD` to the same value passed to `opencode serve` when
 `GET /session` only returns the project selected by `?directory=` (or the server’s working directory). The sidebar does two things:
 
 1. It loads `GET /project`, then `GET /session?directory=<worktree>` for each project, and sorts by `time.updated`. The worktree `/` is skipped. Each later call for a session sends `?directory=` from that session.
-2. It also asks the proxy for `GET /_db/sessions`. That endpoint opens OpenCode’s SQLite file read-only (`node:sqlite`, `readOnly: true`, `PRAGMA query_only`). It never writes. Deletes, renames, and prompts still go through the OpenCode HTTP API. If the file is missing the proxy returns 404. If `node:sqlite` is missing it returns 501. The page ignores both and keeps the API list.
+2. It also asks the proxy for `GET /_db/sessions`. That endpoint opens OpenCode’s SQLite file read-only (`node:sqlite`, `readOnly: true`, `PRAGMA query_only`). It never writes. Deletes, renames, and prompts still go through the OpenCode HTTP API. If the file is missing the proxy returns 404. If `node:sqlite` is missing it returns 501. The page ignores both and keeps the API list. The proxy also streams `GET /_db/events`, a change event whenever that file (or its WAL) moves; the page uses it as a liveness signal.
 
 The database path is `OPENCODE_DB`, then `$XDG_DATA_HOME/opencode/opencode.db`, then `~/.local/share/opencode/opencode.db`, then on macOS `~/Library/Application Support/opencode/opencode.db`. If `opencode.db` is not in that directory, the newest `opencode*.db` is used (`opencode-local.db` for dev builds, `opencode.db` for release builds). Columns come from `PRAGMA table_info`, not a hard-coded schema. Root sessions only; archived rows are omitted unless `?archived=1`. `?q=` searches titles and `?limit=` caps the list.
 
 API rows win over database rows when both exist. A database session whose project the server cannot open shows: “This session’s project isn’t available to the server.”
 
 Live updates prefer `GET /global/event`, one server-sent stream for every project (`{directory, payload}`). If that route is missing, the page opens `GET /event?directory=` per project. Streams use `fetch` and a `ReadableStream`, so auth headers work. A dropped stream reconnects after 2 seconds and reloads sessions and the open transcript.
+
+When the OpenCode stream is silent, the page falls back to `GET /_db/events`: a database change makes it reload the list, refresh statuses, and release a queued prompt that was waiting on a stale “busy” marker. It also rechecks status before queueing a prompt, and refreshes when the tab becomes visible again or the browser comes back online.
 
 `GET /_home` on the proxy returns the home directory used by the Home page. It refuses the filesystem root.
 
