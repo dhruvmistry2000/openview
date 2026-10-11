@@ -295,7 +295,9 @@ function renderPart(part) {
     const details = el("details", "reason")
     details.dataset.part = part.id || ""
     if (part.id && state.detailsOpen.get(part.id)) details.open = true
-    details.append(el("summary", null, "Reasoning"))
+    const summary = el("summary")
+    summary.append(el("span", "fold-label", "Thinking"))
+    details.append(summary)
     const block = el("div", "md")
     renderMarkdown(block, part.text || "")
     details.append(block)
@@ -307,10 +309,11 @@ function renderPart(part) {
     details.dataset.part = part.id || ""
     if (part.id && state.detailsOpen.get(part.id)) details.open = true
     const summary = el("summary")
-    summary.append(el("i", "dot " + (toolState.status || "pending")))
-    summary.append(el("span", "tool-name", part.tool || "tool"))
+    const name = part.tool || "tool"
     const one = toolSummary(part)
-    if (one) summary.append(el("span", "tool-sum", one))
+    summary.append(el("i", "dot " + (toolState.status || "pending")))
+    summary.append(el("span", "tool-sum", one || name))
+    if (one) summary.append(el("span", "tool-name", name))
     details.append(summary)
     if (toolState.input && typeof toolState.input === "object" && Object.keys(toolState.input).length) {
       const pre = el("pre", "tool-in")
@@ -389,7 +392,6 @@ function renderMessageNode(message) {
     }
     return article
   }
-  article.append(el("p", "kicker", "Assistant"))
   for (const part of message.parts || []) {
     const node = renderPart(part)
     if (node) article.append(node)

@@ -120,12 +120,15 @@ function renderComposer() {
   const blocked = state.unavailable || state.starting || (!session && !onHome)
   $("input").disabled = blocked
   $("send").disabled = blocked
+  const busy = session ? isBusy(session.id) : false
   $("input").placeholder = state.skill
     ? `What should ${state.skill} do?`
-    : (onHome ? "How can I help you today?" : "Message")
+    : busy
+      ? "Waits until this one finishes"
+      : (onHome ? "How can I help you today?" : "Message")
   paintSend(onHome)
   $("send").classList.toggle("is-wait", state.starting)
-  const busy = session ? isBusy(session.id) : false
+  $("send").hidden = busy
   $("stop").hidden = !busy
   renderQueue()
 }

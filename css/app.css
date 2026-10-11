@@ -577,7 +577,9 @@
     padding: 12px 20px 28px;
   }
   #stream:has(.empty-main), #stream:has(.home) { display: flex; }
-  .thread { max-width: 760px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+  .thread { max-width: 760px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 6px; }
+  .msg-user { margin-top: 18px; }
+  .msg-assistant + .msg-user { margin-top: 22px; }
   .empty-main { color: var(--ink-soft); margin: auto; text-align: center; }
   .empty-main p { margin: 0; }
   .home { margin: 0 auto; width: min(680px, 100%); text-align: center; }
@@ -735,24 +737,60 @@
   .md table { border-collapse: collapse; font-size: 13px; display: block; overflow: auto; }
   .md th, .md td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; vertical-align: top; }
   .md th { background: var(--fog); font-weight: 600; }
-  .tool, .reason, .note {
-    margin: 6px 0;
+  .tool, .reason, .note { margin: 6px 0; }
+  .note {
     border-left: 1px solid var(--line);
     padding: 2px 0 2px 12px;
+    color: var(--ink-soft);
+    font-size: 13px;
   }
-  .tool summary, .reason summary {
-    cursor: pointer;
+  .reason summary, .tool summary { cursor: pointer; }
+  .reason summary {
+    display: inline-flex;
+    width: auto;
+    color: var(--ink-soft);
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--fill);
+  }
+  .fold-label { font-weight: 500; }
+  .reason .md {
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    margin-top: 6px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--fill);
+  }
+  .tool {
+    border-radius: 8px;
+    padding: 6px 10px;
+    background: var(--fill);
+  }
+  .tool summary {
     display: flex;
     gap: 8px;
-    align-items: baseline;
+    align-items: center;
     min-width: 0;
   }
-  .tool-name { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12.5px; }
-  .tool-sum { color: var(--ink-soft); font-size: 13px; min-width: 0; }
+  .tool-name {
+    flex: none;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+  .tool-sum {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ink);
+    font-size: 13px;
+  }
   .tool pre { max-height: 280px; margin-top: 6px; }
   .tool pre.is-error { color: var(--danger); }
-  .reason .md { color: var(--ink-soft); font-size: 13.5px; padding-top: 4px; }
-  .note { color: var(--ink-soft); font-size: 13px; }
   .msg-foot { margin-top: 6px; color: var(--ink-soft); font-size: 12px; }
   .msg-actions { display: flex; justify-content: flex-end; margin-top: 6px; }
   .msg-actions button { font-size: 12px; padding: 4px 8px; }
@@ -820,7 +858,12 @@
     font-weight: 500;
   }
   #send:hover { background: color-mix(in srgb, var(--ink) 88%, var(--paper)); }
-  #stop { border-color: var(--danger); color: var(--danger); }
+  #stop {
+    border-color: var(--danger);
+    color: var(--danger);
+    padding: 7px 14px;
+    font-weight: 500;
+  }
   #send:disabled, #input:disabled, #stop:disabled { opacity: 0.45; cursor: default; }
   dialog {
     border: 1px solid var(--line);
