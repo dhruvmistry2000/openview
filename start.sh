@@ -2,6 +2,7 @@
 # Start OpenCode when it is not already listening, then run the Openview proxy
 # in the foreground. Stopping this script stops only the OpenCode process it
 # started. HOST, PORT, and OPENCODE_URL are passed through to server.mjs.
+# Pass "install" or "uninstall" to manage a systemd user service instead.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,6 +12,87 @@ HOST="${HOST:-127.0.0.1}"
 PORT="${PORT:-8080}"
 OPENCODE_URL="${OPENCODE_URL:-http://127.0.0.1:4096}"
 export HOST PORT OPENCODE_URL
+
+UNIT_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
+UNIT_FILE="$UNIT_DIR/openview.service"
+
+usage() {
+  cat <<'EOF'
+Usage: start.sh [command]
+
+Commands:
+  install     Install Openview as a systemd user service and start it
+  uninstall   Stop the user service and remove its unit file
+  (none)      Start Openview in the foreground (default)
+EOF
+}
+
+unit_path() {
+  local value="/usr/local/bin:/usr/bin:/bin" bin found dir
+  for bin in opencode node; do
+    found="$(command -v "$bin" 2>/dev/null || true)"
+    if [[ -n "$found" ]]; then
+      dir="$(dirname "$found")"
+      case ":$value:" in
+        *":$dir:"*) ;;
+        *) value="$dir:$value" ;;
+      esac
+    fi
+  done
+  printf '%s\n' "$value"
+}
+
+install_service() {
+  mkdir -p "$UNIT_DIR"
+  cat >"$UNIT_FILE" <<EOF
+[Unit]
+Description=Openview proxy for OpenCode
+
+[Service]
+Type=simple
+WorkingDirectory=$ROOT
+ExecStart=$ROOT/start.sh
+Restart=on-failure
+RestartSec=5
+
+Environment=HOST=$HOST
+Environment=PORT=$PORT
+Environment=OPENCODE_URL=$OPENCODE_URL
+Environment=PATH=$(unit_path)
+
+[Install]
+WantedBy=default.target
+EOF
+  systemctl --user daemon-reload
+  systemctl --user enable --now openview.service
+  echo "Installed $UNIT_FILE"
+  echo "Logs: journalctl --user -u openview.service"
+}
+
+uninstall_service() {
+  systemctl --user disable --now openview.service 2>/dev/null || true
+  rm -f "$UNIT_FILE"
+  systemctl --user daemon-reload
+  echo "Removed openview.service"
+}
+
+case "${1:-}" in
+  install)
+    install_service
+    exit 0
+    ;;
+  uninstall)
+    uninstall_service
+    exit 0
+    ;;
+  "")
+    ;;
+  *)
+    echo "Unknown command: $1" >&2
+    usage >&2
+    exit 1
+    ;;
+esac
 
 if ! command -v node >/dev/null 2>&1; then
   echo "node was not found on PATH. Openview needs Node.js." >&2

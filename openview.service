@@ -1,0 +1,19 @@
+[Unit]
+Description=Openview proxy for OpenCode
+
+[Service]
+Type=simple
+WorkingDirectory=/home/dhruv/repos/openview
+ExecStart=/home/dhruv/repos/openview/start.sh
+Restart=on-failure
+RestartSec=5
+
+Environment=HOST=127.0.0.1
+Environment=PORT=8080
+Environment=OPENCODE_URL=http://127.0.0.1:4096
+
+# The user manager starts with a minimal PATH; opencode lives in ~/.opencode/bin.
+Environment=PATH=/home/dhruv/.opencode/bin:/home/dhruv/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+[Install]
+WantedBy=default.target
