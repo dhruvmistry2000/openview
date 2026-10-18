@@ -10,6 +10,7 @@ The browser page is `index.html`. Styles live in `css/app.css`, and the client i
 | --- | --- |
 | `index.html` | Page shell |
 | `css/app.css` | Layout and theme |
+| `logo/` | Logo mark and favicon |
 | `js/` | Browser client, one file per area |
 | `server.mjs` | Proxy, static files, and the Home route |
 | `lib/db.mjs` | Read-only session database |
@@ -91,7 +92,9 @@ A dot on a row shows that the session is working. **permission** means OpenCode 
 
 ### A conversation
 
-Open a session from the list. The title and the project path sit above the transcript. **Rename** and **Delete** are on that bar.
+Open a session from the list. It stays as a tab above the conversation, so opening another one does not throw the first away. Click a tab to switch. The one you leave keeps its place in the transcript, the text in the box, and a turn that is still running. A dot on a tab means that session is working, waiting for permission, or has something new since you left it. **×** or a middle-click closes a tab. **+** on the tab bar starts another session. Open tabs are remembered in this browser. Alt+Left and Alt+Right move between them.
+
+The title and the project path sit above the transcript. **Rename** and **Delete** are on that bar.
 
 Type in the box at the bottom and press Enter to send. Shift+Enter adds a line. On a phone, use the send button. While a turn is running, **Stop** aborts it. A message sent during a busy turn is queued, and you can remove it before it goes out.
 

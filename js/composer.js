@@ -13,27 +13,45 @@ function setHash(id) {
 
 async function openSession(id) {
   if (!id) return
-  if ($("main").classList.contains("home-view")) {
+  const existing = state.views.get(id)
+  const cached = existing?.loaded && !existing.loading && !existing.unavailable
+  if (state.activeId === id && cached) {
+    rememberTab(id)
+    existing.unseen = false
+    renderTabs()
+    renderSidebar()
+    return
+  }
+  const switching = state.activeId !== id
+  if (switching && state.activeId) stashActive()
+  else if (switching && $("main").classList.contains("home-view")) {
+    state.homeDraft = ""
     $("input").value = ""
     growInput()
   }
+  const view = rememberTab(id)
+  const first = !view.loaded || view.unavailable
   state.activeId = id
-  state.unavailable = false
-  state.stick = true
-  clearChanges()
-  state.loadGen += 1
-  const gen = state.loadGen
+  state.messages = view.messages
+  state.stick = first ? true : view.stick
+  state.unavailable = first ? false : view.unavailable
+  state.loadingMessages = first
+  view.loading = first
+  view.unseen = false
+  if (switching) restoreDraft(view.draft)
   setHash(id)
-  if (state.bannerKind === "missing" || state.bannerKind === "session-error") clearBanner()
-  const pending = state.messages.filter((message) => String(message.info?.id || "").startsWith("pending:"))
-  state.messages = []
-  state.loadingMessages = true
+  if (view.banner) showBanner(view.banner, view.bannerKind || "info")
+  else if (state.bannerKind) clearBanner()
   renderSidebar()
   renderHeader()
   renderStream()
   renderPrompts()
+  if (!first) placeScroll(view)
   const known = state.sessions.get(id)
   if (!known) {
+    view.loading = false
+    view.loaded = true
+    view.unavailable = true
     state.loadingMessages = false
     state.unavailable = true
     showBanner("This session's project isn't available to the server.", "missing")
@@ -41,6 +59,16 @@ async function openSession(id) {
     renderComposer()
     return
   }
+  if (!first) {
+    loadPickers(known.directory)
+    loadChanges(known.directory, id)
+    if (view.stale && !isBusy(id)) refreshTabMessages(id, beginLoad(id))
+    return
+  }
+  clearChanges()
+  const pending = state.messages.filter((message) => String(message.info?.id || "").startsWith("pending:"))
+  setMessages([])
+  const gen = beginLoad(id)
   try {
     let full = null
     try {
@@ -53,35 +81,68 @@ async function openSession(id) {
         throw err
       }
     }
-    if (gen !== state.loadGen) return
+    if (!loadCurrent(id, gen)) return
     if (full?.id) applySessionInfo(full)
     const directory = full?.directory || known.directory
     const messages = await getJSON(`/session/${encodeURIComponent(id)}/message?limit=300`, directory)
-    if (gen !== state.loadGen) return
-    state.messages = Array.isArray(messages) ? messages : []
-    if (!state.messages.some((message) => message.info?.role === "user") && pending.length) {
-      state.messages = pending.concat(state.messages)
-    }
-    sortMessages()
-    state.loadingMessages = false
-    state.unavailable = false
+    if (!loadCurrent(id, gen)) return
+    let list = Array.isArray(messages) ? messages : []
+    if (!list.some((message) => message.info?.role === "user") && pending.length) list = pending.concat(list)
+    sortList(list)
+    const where = commitLoaded(id, gen, list)
+    if (where !== "active") return
+    state.stick = true
     renderHeader()
     renderStream()
     $("stream").scrollTop = $("stream").scrollHeight
     loadPickers(directory)
     loadChanges(directory, id)
   } catch (err) {
-    if (gen !== state.loadGen) return
-    state.loadingMessages = false
+    if (!loadCurrent(id, gen)) return
+    view.loading = false
+    view.loaded = true
+    if (state.activeId === id) state.loadingMessages = false
     if (err.status === 404) {
-      state.unavailable = true
-      showBanner("This session's project isn't available to the server.", "missing")
-    } else if (!err.offline && err.status !== 401) {
+      view.unavailable = true
+      if (state.activeId === id) {
+        state.unavailable = true
+        showBanner("This session's project isn't available to the server.", "missing")
+      } else {
+        view.banner = "This session's project isn't available to the server."
+        view.bannerKind = "missing"
+        view.unseen = true
+        renderTabs()
+      }
+    } else if (state.activeId === id && !err.offline && err.status !== 401) {
       showBanner(err.message || "Couldn't open this session.")
     }
-    renderStream()
-    renderComposer()
+    if (state.activeId === id) {
+      renderStream()
+      renderComposer()
+    }
   }
+}
+
+async function refreshTabMessages(id, gen) {
+  const session = state.sessions.get(id)
+  const view = state.views.get(id)
+  if (!session || !view) return
+  const stamp = view.messages.map((message) => `${message.info?.id || ""}:${message.parts?.length || 0}`).join("|")
+  try {
+    const messages = await getJSON(`/session/${encodeURIComponent(id)}/message?limit=300`, session.directory)
+    if (!loadCurrent(id, gen) || isBusy(id)) return
+    const now = view.messages.map((message) => `${message.info?.id || ""}:${message.parts?.length || 0}`).join("|")
+    if (stamp !== now || !Array.isArray(messages)) return
+    let list = messages
+    const pending = view.messages.filter((message) => String(message.info?.id || "").startsWith("pending:"))
+    if (pending.length && !list.some((message) => message.info?.role === "user")) list = pending.concat(list)
+    sortList(list)
+    const top = state.activeId === id && !state.stick ? $("stream").scrollTop : null
+    const where = commitLoaded(id, gen, list)
+    if (where !== "active") return
+    renderStream()
+    if (top != null) $("stream").scrollTop = top
+  } catch { /* keep the cached transcript */ }
 }
 
 function splitModel(value) {
@@ -135,9 +196,14 @@ function renderComposer() {
 
 async function refreshTranscript(session) {
   const messages = await getJSON(`/session/${encodeURIComponent(session.id)}/message?limit=300`, session.directory)
-  if (session.id !== state.activeId) return
-  state.messages = Array.isArray(messages) ? messages : []
-  sortMessages()
+  const list = Array.isArray(messages) ? messages : []
+  sortList(list)
+  if (session.id !== state.activeId) {
+    const view = state.views.get(session.id)
+    if (view) view.messages = list
+    return
+  }
+  setMessages(list)
   state.stick = true
   renderStream()
   loadChanges(session.directory, session.id, true)
@@ -188,28 +254,32 @@ async function postPrompt(sessionId, text, directory, skill = state.skill) {
     : { parts: [{ type: "text", text }] }
   if (model) body.model = skill ? `${model.providerID}/${model.modelID}` : model
   if (state.agent) body.agent = state.agent
-  if (sessionId === state.activeId) {
+  if (sessionId === state.activeId || state.tabs.includes(sessionId)) {
     const pending = {
       info: { id: `pending:${Date.now()}`, role: "user", time: { created: Date.now() } },
       parts: [{ id: `pending-part:${Date.now()}`, type: "text", text }],
     }
-    state.messages.push(pending)
-    state.stick = true
-    markDirty(pending.info.id)
+    const list = listFor(sessionId)
+    if (list) {
+      list.push(pending)
+      if (sessionId === state.activeId) {
+        state.stick = true
+        const view = state.views.get(sessionId)
+        if (view) view.stick = true
+        markDirty(pending.info.id)
+      }
+    }
   }
   try {
     state.status.set(sessionId, { type: "busy" })
     renderComposer()
+    renderTabs()
     const path = skill
       ? `/session/${encodeURIComponent(sessionId)}/command`
       : `/session/${encodeURIComponent(sessionId)}/prompt_async`
     await request("POST", path, dir, body)
   } catch (err) {
-    if (sessionId === state.activeId) {
-      for (const id of dropPending()) {
-        $("stream").querySelector(`[data-id="${CSS.escape(id)}"]`)?.remove()
-      }
-    }
+    dropPending(sessionId)
     const queued = err.status === 400 && /busy/i.test(`${err.message} ${JSON.stringify(err.data || {})}`)
     if (!queued && state.status.get(sessionId)?.type === "busy") state.status.set(sessionId, { type: "idle" })
     if (queued) {
@@ -275,7 +345,9 @@ async function sendCurrent() {
       if (!created?.id) throw new Error("The server did not return a session.")
       if (!created.directory) created.directory = state.home
       applySessionInfo(created)
+      rememberTab(created.id)
       state.activeId = created.id
+      state.messages = ensureView(created.id).messages
       renderHeader()
       renderStream()
       await postPrompt(created.id, text, state.home, state.skill)
@@ -467,14 +539,14 @@ async function createSession(directory) {
 }
 
 function showHome() {
-  $("input").value = ""
-  growInput()
+  if (state.activeId) stashActive()
   state.activeId = null
   state.unavailable = false
   state.messages = []
   state.loadingMessages = false
   state.loadGen += 1
   clearChanges()
+  restoreDraft(state.homeDraft)
   if (location.hash && location.hash !== "#/") {
     state.ignoreHash = true
     location.hash = "#/"
@@ -555,17 +627,35 @@ async function deleteSession() {
       return
     }
   }
-  state.sessions.delete(session.id)
-  state.status.delete(session.id)
-  state.permissions = state.permissions.filter((item) => item.sessionID !== session.id)
+  const id = session.id
+  const index = state.tabs.indexOf(id)
+  state.sessions.delete(id)
+  state.status.delete(id)
+  state.permissions = state.permissions.filter((item) => item.sessionID !== id)
+  if (index !== -1) {
+    state.tabs.splice(index, 1)
+    state.views.delete(id)
+    saveTabs()
+  }
   state.activeId = null
   state.messages = []
-  state.ignoreHash = true
-  history.replaceState(null, "", location.pathname + location.search)
+  state.loadingMessages = false
+  state.unavailable = false
   clearBanner()
+  const next = index === -1 ? null : (state.tabs[index] || state.tabs[index - 1] || null)
+  if (next) {
+    await openSession(next)
+    return
+  }
+  restoreDraft(state.homeDraft)
+  if (location.hash && location.hash !== "#/") {
+    state.ignoreHash = true
+    location.hash = "#/"
+  }
   renderSidebar()
   renderHeader()
   renderStream()
   renderPrompts()
+  if (state.home) $("input").focus()
 }
 

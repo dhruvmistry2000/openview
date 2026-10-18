@@ -1,7 +1,7 @@
 /**
  * Zero-dependency proxy for Openview.
  *
- * Serves index.html, css/, and js/, then forwards every other request to the
+ * Serves index.html, css/, js/, and logo/, then forwards every other request to the
  * OpenCode HTTP server. GET /_home returns this machine's home directory.
  * GET /_db/sessions reads the local SQLite database read-only. GET /_db/events
  * streams a change event whenever that database file changes. POST /_library
@@ -37,6 +37,10 @@ const TYPES = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".ico": "image/x-icon",
+  ".webmanifest": "application/manifest+json",
 }
 const DROP_HEADERS = new Set([
   "origin",
@@ -118,7 +122,7 @@ function localFile(pathname) {
     return null
   }
   const rel = decoded === "/" ? "index.html" : decoded.replace(/^\/+/, "")
-  if (rel !== "index.html" && !rel.startsWith("css/") && !rel.startsWith("js/")) return null
+  if (rel !== "index.html" && !rel.startsWith("css/") && !rel.startsWith("js/") && !rel.startsWith("logo/")) return null
   if (rel.includes("\0") || rel.split("/").includes("..")) return null
   const ext = path.extname(rel)
   if (rel !== "index.html" && !TYPES[ext]) return null

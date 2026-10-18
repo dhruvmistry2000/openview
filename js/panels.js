@@ -33,9 +33,12 @@ function syncChanges() {
   const expanded = !panel.hidden && (narrow ? panel.classList.contains("open") : !collapsed)
   panel.inert = !expanded
   const show = $("show-changes")
-  show.hidden = panel.hidden
+  show.hidden = false
+  show.disabled = panel.hidden
+  const label = panel.hidden ? "No changes to show" : (expanded ? "Hide changes" : "Show changes")
   show.setAttribute("aria-expanded", expanded ? "true" : "false")
-  show.setAttribute("aria-label", expanded ? "Hide changes" : "Show changes")
+  show.setAttribute("aria-label", label)
+  show.title = label
   syncScrim()
 }
 

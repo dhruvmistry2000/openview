@@ -24,6 +24,7 @@ function loadLocal() {
   } catch {
     state.folded = new Set()
   }
+  loadTabs()
   if (localStorage.getItem("oc-ui-sidebar") === "closed") $("app").classList.add("sidebar-collapsed")
   if (localStorage.getItem("oc-ui-changes") === "closed") $("app").classList.add("changes-collapsed")
 }
@@ -387,11 +388,14 @@ function renderProjectSelect() {
       node.title = project.worktree
       select.append(node)
     }
-    select.dataset.signature = signature
+      select.dataset.signature = signature
   }
   const wanted = [...select.options].some((item) => item.value === state.projectFilter) ? state.projectFilter : "all"
   state.projectFilter = wanted
   select.value = wanted
+  const label = $("project-label")
+  if (label) label.textContent = select.selectedOptions[0]?.textContent || "All projects"
+  if (typeof renderProjectMenu === "function") renderProjectMenu()
 }
 
 function renderRevertBar() {
@@ -400,6 +404,7 @@ function renderRevertBar() {
 }
 
 function renderHeader() {
+  renderTabs()
   const session = currentSession()
   const onHome = !session && Boolean(state.home)
   renderRevertBar()
@@ -412,9 +417,13 @@ function renderHeader() {
   $("main").classList.toggle("is-sending", Boolean(state.starting))
   $("composer").hidden = !session && !onHome
   renderHomeSuggest(enteredHome)
-  $("home-btn").hidden = !state.home
-  if (onHome) $("home-btn").setAttribute("aria-current", "page")
-  else $("home-btn").removeAttribute("aria-current")
+  for (const id of ["brand-home", "home-mark"]) {
+    const button = $(id)
+    if (!button) continue
+    button.disabled = !state.home
+    if (onHome) button.setAttribute("aria-current", "page")
+    else button.removeAttribute("aria-current")
+  }
   const path = $("path")
   path.textContent = session?.directory || ""
   path.title = session?.directory || ""

@@ -96,6 +96,7 @@ function renderPrompts() {
     if (sessionId && item.sessionID && item.sessionID !== sessionId) continue
     root.append(questionCard(item))
   }
+  renderTabs()
 }
 
 function questionCard(item) {

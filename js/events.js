@@ -23,13 +23,27 @@ function onEvent(packet) {
     if (!id) return
     state.sessions.delete(id)
     state.status.delete(id)
-    if (id === state.activeId) {
+    const index = state.tabs.indexOf(id)
+    const wasActive = id === state.activeId
+    if (index !== -1) {
+      state.tabs.splice(index, 1)
+      state.views.delete(id)
+      saveTabs()
+    }
+    if (wasActive) {
       state.activeId = null
       state.messages = []
-      showBanner("This session was deleted.")
-      renderStream()
-      renderHeader()
-    }
+      state.loadingMessages = false
+      state.unavailable = false
+      const next = index === -1 ? null : (state.tabs[index] || state.tabs[index - 1] || null)
+      if (next) openSession(next)
+      else {
+        showBanner("This session was deleted.")
+        restoreDraft(state.homeDraft)
+        renderStream()
+        renderHeader()
+      }
+    } else renderTabs()
     scheduleSidebar()
     return
   }
@@ -58,7 +72,17 @@ function onEvent(packet) {
     return
   }
   if (type === "session.error") {
-    if (props.sessionID === state.activeId && props.error) showBanner(errorText(props.error), "session-error")
+    if (props.sessionID && props.error) {
+      const text = errorText(props.error)
+      if (props.sessionID === state.activeId) showBanner(text, "session-error")
+      else if (state.tabs.includes(props.sessionID)) {
+        const view = ensureView(props.sessionID)
+        view.banner = text.length > 500 ? `${text.slice(0, 500)}…` : text
+        view.bannerKind = "session-error"
+        view.unseen = true
+        renderTabs()
+      }
+    }
     return
   }
   if (type === "permission.asked" || type === "permission.updated" || type === "permission.v2.asked") {
@@ -84,7 +108,7 @@ function onEvent(packet) {
     return
   }
   const sessionID = props.sessionID || props.info?.sessionID || props.part?.sessionID
-  if (sessionID && sessionID !== state.activeId) {
+  if (sessionID && sessionID !== state.activeId && !state.tabs.includes(sessionID)) {
     if (type.startsWith("message.")) touchSession(sessionID)
     return
   }
@@ -94,7 +118,7 @@ function onEvent(packet) {
     return
   }
   if (type === "message.removed") {
-    removeMessage(props.messageID)
+    removeMessage(props.messageID, props.sessionID)
     return
   }
   if (type === "message.part.updated" && props.part) {
@@ -106,7 +130,7 @@ function onEvent(packet) {
     return
   }
   if (type === "message.part.removed") {
-    removePart(props.messageID, props.partID)
+    removePart(props.messageID, props.partID, props.sessionID)
   }
 }
 
@@ -248,6 +272,7 @@ async function resync(opts = {}) {
   try {
     await refreshSessions()
     if (opts.messages !== false && state.activeId && !state.unavailable) await reloadMessages()
+    markTabsStale()
     await loadPermissions()
     if (state.activeId) flushQueue(state.activeId)
   } catch { /* the banner already explains an outage */ }
@@ -313,17 +338,18 @@ async function connectDbEvents() {
 async function reloadMessages() {
   const session = currentSession()
   if (!session) return
-  const gen = state.loadGen
+  const view = ensureView(session.id)
+  const gen = view.gen
   try {
     const messages = await getJSON(`/session/${encodeURIComponent(session.id)}/message?limit=300`, session.directory)
-    if (gen !== state.loadGen || state.activeId !== session.id) return
+    if (!loadCurrent(session.id, gen) || state.activeId !== session.id) return
     if (Array.isArray(messages)) {
-      state.messages = messages
-      sortMessages()
-      renderStream()
+      sortList(messages)
+      const where = commitLoaded(session.id, gen, messages)
+      if (where === "active") renderStream()
     }
   } catch (err) {
-    if (gen !== state.loadGen) return
+    if (!loadCurrent(session.id, gen)) return
     if (err.status === 404) {
       state.unavailable = true
       showBanner("This session's project isn't available to the server.", "missing")

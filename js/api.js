@@ -26,6 +26,13 @@ function showBanner(text, kind = "info") {
   const banner = $("banner")
   const shown = String(text || "")
   const clipped = shown.length > 500 ? `${shown.slice(0, 500)}…` : shown
+  if (state.activeId) {
+    const view = state.views.get(state.activeId)
+    if (view) {
+      view.banner = clipped
+      view.bannerKind = kind
+    }
+  }
   banner.hidden = false
   banner.replaceChildren(el("span", null, clipped))
   const dismiss = el("button", "text-btn", "Dismiss")
@@ -36,6 +43,13 @@ function showBanner(text, kind = "info") {
 
 function clearBanner() {
   state.bannerKind = ""
+  if (state.activeId) {
+    const view = state.views.get(state.activeId)
+    if (view) {
+      view.banner = ""
+      view.bannerKind = ""
+    }
+  }
   const banner = $("banner")
   banner.hidden = true
   banner.replaceChildren()

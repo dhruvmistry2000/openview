@@ -20,6 +20,9 @@ function renderPickers() {
     if (item.description) node.title = item.description
     skill.append(node)
   }
+  if (state.skill && ![...skill.options].some((item) => item.value === state.skill)) {
+    skill.append(option(state.skill, state.skill))
+  }
   skill.value = [...skill.options].some((item) => item.value === state.skill) ? state.skill : ""
 }
 
@@ -35,7 +38,8 @@ function settlePickerChoice() {
     state.model = ids.includes(preferred) ? preferred : ""
     localStorage.setItem("oc-ui-model", state.model)
   }
-  if (state.skills.length && state.skill && !state.skills.some((item) => item.name === state.skill)) {
+  const commandNames = state.commands.map((item) => item.name)
+  if (state.skills.length && state.skill && !state.skills.some((item) => item.name === state.skill) && !commandNames.includes(state.skill)) {
     state.skill = ""
     localStorage.setItem("oc-ui-skill", "")
   }
@@ -58,6 +62,7 @@ async function loadPickers(directory) {
   let agents = []
   let models = []
   let skills = []
+  let commands = []
   try {
     const listed = await getJSON("/agent", dir || undefined)
     if (Array.isArray(listed)) {
@@ -90,12 +95,19 @@ async function loadPickers(directory) {
         skills.push({ name: command.name, description: description.slice(0, 240) })
       }
       skills.sort((a, b) => a.name.localeCompare(b.name))
+      for (const command of listed) {
+        if (!command?.name || command.source === "skill") continue
+        const description = String(command.description || "").replace(/\s+/g, " ").trim()
+        commands.push({ name: command.name, description: description.slice(0, 240) })
+      }
+      commands.sort((a, b) => a.name.localeCompare(b.name))
     }
   } catch { /* this folder has no skill list */ }
   if (gen !== state.pickerGen) return
   state.agents = agents
   state.models = models
   state.skills = skills
+  state.commands = commands
   settlePickerChoice()
   renderPickers()
   renderComposer()
@@ -170,6 +182,9 @@ async function refreshSessions() {
   }
   if (state.activeId && !next.has(state.activeId) && state.sessions.has(state.activeId)) {
     next.set(state.activeId, state.sessions.get(state.activeId))
+  }
+  for (const id of state.tabs) {
+    if (!next.has(id) && state.sessions.has(id)) next.set(id, state.sessions.get(id))
   }
   state.sessions = next
   state.apiAvailable = api

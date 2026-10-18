@@ -14,7 +14,10 @@ try {
 } catch (e) {}
 </script>
 <title>Openview</title>
-<link rel="icon" href="data:,">
+<link rel="icon" href="/logo/favicon.ico" sizes="48x48">
+<link rel="icon" href="/logo/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/logo/apple-touch-icon.png">
+<link rel="manifest" href="/logo/site.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -29,14 +32,50 @@ try {
         <path d="M9 4.5v15" fill="none" stroke="currentColor" stroke-width="1.75"/>
       </svg>
     </button>
-    <label>Project
-      <select id="project" aria-label="Project"></select>
-      <button id="new-project-btn" class="ghost" type="button">New project</button>
-    </label>
-    <button id="home-btn" type="button" hidden>Home</button>
-    <button id="library-btn" type="button">Library</button>
-    <button id="settings-btn" type="button">Settings</button>
-    <button id="show-changes" class="icon-btn" type="button" hidden aria-expanded="true" aria-controls="changes" aria-label="Hide changes">
+    <button id="home-mark" class="home-mark" type="button" aria-label="Home">
+      <span class="logo" aria-hidden="true">
+        <img class="logo-on-light" src="/logo/mark-color.svg" alt="">
+        <img class="logo-on-dark" src="/logo/mark-dark.svg" alt="">
+      </span>
+    </button>
+    <div class="project-wrap">
+      <button id="project-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="project-menu">
+        <span id="project-label">All projects</span>
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+          <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div id="project-menu" class="menu" role="listbox" aria-label="Project" hidden></div>
+      <select id="project" class="sr-only" tabindex="-1" aria-hidden="true"></select>
+    </div>
+    <button id="palette-btn" class="icon-btn" type="button" aria-label="Search" title="Search (Ctrl+K)">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <circle cx="11" cy="11" r="6.25" fill="none" stroke="currentColor" stroke-width="1.75"/>
+        <path d="M16 16.5 20 20.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <button id="library-btn" class="icon-btn desk-only" type="button" aria-label="Library" title="Library">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <path d="M5 5.5h4.5a2 2 0 0 1 2 2V19a2 2 0 0 0-2-1.5H5zM19 5.5h-4.5a2 2 0 0 0-2 2V19a2 2 0 0 1 2-1.5H19z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <button id="settings-btn" class="icon-btn desk-only" type="button" aria-label="Settings" title="Settings">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.75"/>
+        <path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M5.8 5.8l1.6 1.6M16.6 16.6l1.6 1.6M18.2 5.8l-1.6 1.6M7.4 16.6l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <div class="more-wrap">
+      <button id="top-more" class="icon-btn" type="button" aria-label="More" aria-haspopup="menu" aria-expanded="false" aria-controls="top-more-menu">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <circle cx="6" cy="12" r="1.2" fill="currentColor"/>
+          <circle cx="12" cy="12" r="1.2" fill="currentColor"/>
+          <circle cx="18" cy="12" r="1.2" fill="currentColor"/>
+        </svg>
+      </button>
+      <div id="top-more-menu" class="menu" role="menu" hidden></div>
+    </div>
+    <button id="show-changes" class="icon-btn" type="button" aria-expanded="false" aria-controls="changes" aria-label="Show changes" title="No changes to show" disabled>
       <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
         <rect x="3.5" y="4.5" width="17" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.75"/>
         <path d="M15 4.5v15" fill="none" stroke="currentColor" stroke-width="1.75"/>
@@ -47,9 +86,13 @@ try {
   <div id="scrim"></div>
   <aside id="sidebar">
     <div class="side-head">
-      <div class="brand">
+      <button id="brand-home" class="brand" type="button" aria-label="Home">
+        <span class="logo" aria-hidden="true">
+          <img class="logo-on-light" src="/logo/mark-color.svg" alt="">
+          <img class="logo-on-dark" src="/logo/mark-dark.svg" alt="">
+        </span>
         <strong>Openview</strong>
-      </div>
+      </button>
       <input id="search" type="search" placeholder="Search sessions" autocomplete="off" aria-label="Search sessions">
       <button id="new-session" class="text-btn" type="button">New session</button>
     </div>
@@ -57,6 +100,14 @@ try {
     <footer id="side-foot" role="status"></footer>
   </aside>
   <main id="main">
+    <div id="tabbar" hidden>
+      <div id="tabs" role="tablist" aria-label="Open sessions"></div>
+      <button id="tab-new" class="icon-btn" type="button" aria-label="New session">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
     <div id="session-bar">
       <div>
         <h1 id="title">Openview</h1>
@@ -100,6 +151,11 @@ try {
   </aside>
   </div>
 </div>
+
+<dialog id="palette" aria-label="Search">
+  <input id="palette-input" type="text" placeholder="Search sessions, projects, and actions" aria-label="Search" autocomplete="off" spellcheck="false">
+  <div id="palette-list" role="listbox"></div>
+</dialog>
 
 <dialog id="settings-dialog">
   <div id="appearance">
@@ -276,6 +332,7 @@ try {
 </dialog>
 
 <script src="/js/state.js"></script>
+<script src="/js/tabs.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/sessions.js"></script>
 <script src="/js/changes.js"></script>
@@ -289,6 +346,7 @@ try {
 <script src="/js/settings.js"></script>
 <script src="/js/panels.js"></script>
 <script src="/js/library.js"></script>
+<script src="/js/chrome.js"></script>
 <script src="/js/main.js"></script>
 </body>
 </html>

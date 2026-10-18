@@ -6,6 +6,7 @@ WORKDIR /app
 COPY server.mjs index.html ./
 COPY css ./css
 COPY js ./js
+COPY logo ./logo
 COPY lib ./lib
 
 # 0.0.0.0 is required when Docker publishes a port into this container.

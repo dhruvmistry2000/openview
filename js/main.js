@@ -59,9 +59,14 @@ function bind() {
     searchTimer = setTimeout(() => searchDb(state.query.trim()), 250)
   })
   $("new-session").addEventListener("click", createSession)
-  $("new-project-btn").addEventListener("click", createSession)
+  $("tab-new").addEventListener("click", createSession)
   bindFolderBrowser()
-  $("home-btn").addEventListener("click", showHome)
+  $("brand-home").addEventListener("click", () => {
+    closeDrawer()
+    showHome()
+  })
+  $("home-mark").addEventListener("click", showHome)
+  bindChrome()
   $("menu").addEventListener("click", () => {
     if (sidebarNarrow()) {
       if ($("sidebar").classList.contains("open")) closeDrawer()
@@ -161,7 +166,13 @@ function bind() {
     sendCurrent()
   })
   $("stop").addEventListener("click", stopSession)
-  $("input").addEventListener("input", growInput)
+  $("input").addEventListener("input", () => {
+    growInput()
+    if (state.activeId) {
+      const view = state.views.get(state.activeId)
+      if (view) view.draft = $("input").value
+    } else state.homeDraft = $("input").value
+  })
   $("input").addEventListener("keydown", (event) => {
     if (event.key !== "Enter" || event.shiftKey || event.isComposing) return
     const coarse = window.matchMedia("(pointer: coarse)").matches
@@ -171,6 +182,13 @@ function bind() {
   })
   $("stream").addEventListener("scroll", () => {
     state.stick = nearBottom()
+    if (state.activeId) {
+      const view = state.views.get(state.activeId)
+      if (view) {
+        view.stick = state.stick
+        view.scroll = $("stream").scrollTop
+      }
+    }
     $("jump").hidden = state.stick || !state.activeId
   }, { passive: true })
   $("jump").addEventListener("click", () => {
@@ -186,6 +204,17 @@ function bind() {
   }, true)
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeDrawer()
+    if (!event.altKey || event.metaKey || event.ctrlKey || event.shiftKey) return
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return
+    if (state.tabs.length < 2) return
+    const typing = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement
+    if (typing) return
+    event.preventDefault()
+    const index = Math.max(0, state.tabs.indexOf(state.activeId))
+    const next = event.key === "ArrowRight"
+      ? state.tabs[(index + 1) % state.tabs.length]
+      : state.tabs[(index - 1 + state.tabs.length) % state.tabs.length]
+    if (next && next !== state.activeId) openSession(next)
   })
   window.addEventListener("hashchange", () => {
     if (state.ignoreHash) {

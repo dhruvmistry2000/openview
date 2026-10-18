@@ -99,6 +99,16 @@ function renderStream() {
     if (state.home) {
       if (!root.querySelector(".home")) {
         const home = el("div", "home")
+        const logo = el("div", "logo home-logo")
+        logo.setAttribute("aria-hidden", "true")
+        const light = el("img", "logo-on-light")
+        light.src = "/logo/mark-color.svg"
+        light.alt = ""
+        const dark = el("img", "logo-on-dark")
+        dark.src = "/logo/mark-dark.svg"
+        dark.alt = ""
+        logo.append(light, dark)
+        home.append(logo)
         home.append(el("h2", null, homeGreeting()))
         home.append(el("p", "mono", state.home))
         root.replaceChildren(home)
