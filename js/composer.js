@@ -222,6 +222,10 @@ async function revertTo(messageID) {
     if (updated?.id) applySessionInfo(updated)
     await refreshTranscript(session)
   } catch (err) {
+    if (isLimitError(err, err.status, err.data)) {
+      showLimitDialog(err.message || errorText(err.data))
+      return
+    }
     if (err.status === 409) showBanner("The session is still working.")
     else if (!err.offline) showBanner(err.message || "Couldn't undo that message.")
   }
@@ -239,6 +243,10 @@ async function restoreReverted() {
     if (updated?.id) applySessionInfo(updated)
     await refreshTranscript(session)
   } catch (err) {
+    if (isLimitError(err, err.status, err.data)) {
+      showLimitDialog(err.message || errorText(err.data))
+      return
+    }
     if (err.status === 409) showBanner("The session is still working.")
     else if (!err.offline) showBanner(err.message || "Couldn't restore the session.")
   }

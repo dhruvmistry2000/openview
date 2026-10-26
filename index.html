@@ -129,6 +129,11 @@ try {
     <form id="composer">
       <div id="queue"></div>
       <textarea id="input" rows="1" placeholder="Message" aria-label="Message"></textarea>
+      <div id="local-model-info" class="local-model-info" hidden>
+        <span class="local-model-badge">Local model</span>
+        <span id="local-model-info-text">Using a local model. Make sure your local server (Ollama/LMStudio/vLLM) is running and reachable.</span>
+        <button id="local-model-test" class="text-btn" type="button">Test connection</button>
+      </div>
       <div class="composer-row">
         <select id="agent" aria-label="Agent"></select>
         <select id="model" aria-label="Model"></select>
@@ -329,6 +334,16 @@ try {
       <button type="submit" value="ok">Create</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="limit-dialog">
+  <div class="limit-dialog">
+    <h2>Usage Limit Reached</h2>
+    <p id="limit-message">You've reached your usage limit. Please check your plan or try again later.</p>
+    <div class="composer-row">
+      <button id="limit-close" class="ghost" type="button">Dismiss</button>
+    </div>
+  </div>
 </dialog>
 
 <script src="/js/state.js"></script>

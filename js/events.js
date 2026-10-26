@@ -74,6 +74,18 @@ function onEvent(packet) {
   if (type === "session.error") {
     if (props.sessionID && props.error) {
       const text = errorText(props.error)
+      if (isLimitError(null, null, props.error) || isLimitError(null, null, text)) {
+        showLimitDialog(text)
+        if (props.sessionID === state.activeId) showBanner(text, "session-error")
+        else if (state.tabs.includes(props.sessionID)) {
+          const view = ensureView(props.sessionID)
+          view.banner = text.length > 500 ? `${text.slice(0, 500)}…` : text
+          view.bannerKind = "session-error"
+          view.unseen = true
+          renderTabs()
+        }
+        return
+      }
       if (props.sessionID === state.activeId) showBanner(text, "session-error")
       else if (state.tabs.includes(props.sessionID)) {
         const view = ensureView(props.sessionID)

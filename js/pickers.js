@@ -24,6 +24,56 @@ function renderPickers() {
     skill.append(option(state.skill, state.skill))
   }
   skill.value = [...skill.options].some((item) => item.value === state.skill) ? state.skill : ""
+  updateLocalModelInfo()
+}
+
+function updateLocalModelInfo() {
+  try {
+    const model = $("model")
+    const info = document.getElementById("local-model-info")
+    const text = document.getElementById("local-model-info-text")
+    const testBtn = document.getElementById("local-model-test")
+    if (!info) return
+    const val = state.model || model?.value || ""
+    const low = val.toLowerCase()
+    const isLocal = /ollama|lmstudio|lm-deploy|vllm|llamacpp|kobold|oobabooga|localai|groq.*local|openwebui/.test(low) || (val.includes("\u001f") && /ollama|lmstudio|localhost|127\.0\.0\.1|:11434|:1234|:5000|:8080/.test(low)) || /\/\w+\/(llama|qwen|gemma|mistral|phi|deepseek)/i.test(val) && !/openai|anthropic|google|bedrock|azure/i.test(val)
+    if (isLocal) {
+      info.hidden = false
+      if (text) text.textContent = `Using a local model (${val.replace("\u001f", " / ")}). Ensure your local server is running and the model is loaded.`
+      if (testBtn) {
+        testBtn.onclick = async (e) => {
+          e.preventDefault()
+          testBtn.disabled = true
+          const old = testBtn.textContent
+          testBtn.textContent = "Testing..."
+          try {
+            const res = await fetch("/_config")
+            if (res.ok) {
+              const cfg = await res.json()
+              const models = Array.isArray(cfg?.models) ? cfg.models : []
+              const match = models.find(m => {
+                const id = `${m.provider || ""}\u001f${m.id || ""}`
+                return id === val || (m.name && low.includes(String(m.name).toLowerCase()))
+              })
+              if (match) {
+                showBanner(`Local model config found: ${match.name || match.id} (${match.provider || "local"})`, "info")
+              } else {
+                showBanner("No explicit local model entry found in config; check if your provider is configured in Settings.", "info")
+              }
+            }
+            showBanner("If requests hang or fail, verify the local server is reachable and the model is pulled/loaded.", "info")
+          } catch (err) {
+            showBanner("Could not read config. Make sure OpenCode is reachable.", "session-error")
+          } finally {
+            testBtn.disabled = false
+            testBtn.textContent = old
+          }
+        }
+      }
+    } else {
+      info.hidden = true
+    }
+  } catch {}
 }
 
 function settlePickerChoice() {

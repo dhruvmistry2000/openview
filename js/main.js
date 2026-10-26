@@ -155,6 +155,7 @@ function bind() {
   $("model").addEventListener("change", () => {
     state.model = $("model").value
     localStorage.setItem("oc-ui-model", state.model)
+    try { if (typeof updateLocalModelInfo === "function") updateLocalModelInfo() } catch {}
   })
   $("skill").addEventListener("change", () => {
     state.skill = $("skill").value

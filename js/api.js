@@ -21,6 +21,33 @@ function errorText(err) {
   try { return JSON.stringify(err) } catch { return "Request failed" }
 }
 
+function showLimitDialog(text) {
+  try {
+    const dialog = document.getElementById("limit-dialog")
+    const msg = document.getElementById("limit-message")
+    const closeBtn = document.getElementById("limit-close")
+    if (!dialog) return false
+    if (msg) msg.textContent = text || "You've reached your usage limit. Please check your plan or try again later."
+    if (closeBtn) {
+      closeBtn.onclick = () => dialog.close()
+    }
+    if (!dialog.open) dialog.showModal()
+    return true
+  } catch {
+    return false
+  }
+}
+
+function isLimitError(err, status, data) {
+  if (status === 429) return true
+  if (status === 402 || status === 403) {
+    const txt = String((typeof data === "string" ? data : errorText(data) || err?.message || "")).toLowerCase()
+    if (txt.includes("limit") || txt.includes("quota") || txt.includes("credit") || txt.includes("usage") || txt.includes("billing") || txt.includes("exceed") || txt.includes("rate")) return true
+  }
+  const txt = String((typeof data === "string" ? data : errorText(data) || err?.message || "")).toLowerCase()
+  return txt.includes("usage limit") || txt.includes("rate limit") || txt.includes("quota exceeded") || txt.includes("limit exceeded") || txt.includes("out of credits") || txt.includes("insufficient credits") || txt.includes("exceeded your") || txt.includes("plan limit")
+}
+
 function showBanner(text, kind = "info") {
   state.bannerKind = kind
   const banner = $("banner")
@@ -108,7 +135,11 @@ async function request(method, path, directory, body) {
     try { data = JSON.parse(text) } catch { data = text }
   }
   if (!res.ok) {
-    const err = new Error(typeof data === "string" && data ? data : errorText(data) || `${res.status}`)
+    const msg = typeof data === "string" && data ? data : errorText(data) || `${res.status}`
+    if (isLimitError(null, res.status, data) || isLimitError(null, res.status, msg)) {
+      showLimitDialog(msg)
+    }
+    const err = new Error(msg)
     err.status = res.status
     err.data = data
     throw err
